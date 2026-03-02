@@ -1,0 +1,77 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 86400  # 24 hours
+  become: true
+
+- name: Install Squid and dependencies
+  ansible.builtin.apt:
+    name:
+      - squid
+      - net-tools
+    state: present
+  become: true
+
+- name: Create Squid configuration
+  ansible.builtin.template:
+    src: squid.conf.j2
+    dest: /etc/squid/squid.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  become: true
+  notify:
+    - Stop squid for validation
+    - Validate squid configuration
+    - Restart squid
+
+- name: Check if Squid cache is initialized
+  ansible.builtin.stat:
+    path: /var/spool/squid/00
+  register: squid_cache_initialized
+
+- name: Stop Squid for cache initialization
+  ansible.builtin.systemd:
+    name: squid
+    state: stopped
+  become: true
+  when: not squid_cache_initialized.stat.exists
+  failed_when: false
+
+- name: Initialize Squid cache
+  ansible.builtin.command: squid -z -F
+  become: true
+  when: not squid_cache_initialized.stat.exists
+  register: cache_init
+  changed_when: cache_init.rc == 0
+
+- name: Enable and start Squid service
+  ansible.builtin.systemd:
+    name: squid
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Flush handlers to validate configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for Squid service to be ready
+  ansible.builtin.wait_for:
+    port: "{{ squid_port }}"
+    host: "0.0.0.0"
+    timeout: 30
+    delay: 2
+
+- name: Test Squid proxy connectivity
+  ansible.builtin.uri:
+    url: "http://www.google.com"
+    timeout: 10
+  environment:
+    http_proxy: "http://localhost:{{ squid_port }}"
+    https_proxy: "http://localhost:{{ squid_port }}"
+  register: proxy_test
+  failed_when: false
+  changed_when: false

@@ -1,0 +1,81 @@
+---
+- name: Detect primary network interface
+  ansible.builtin.shell: |
+    ip route get 192.168.56.0/32 | awk '{print $3}' | head -n1
+  register: detected_interface
+  changed_when: false
+  failed_when: detected_interface.stdout == ""
+
+- name: Set network interface fact
+  ansible.builtin.set_fact:
+    primary_interface: "{{ detected_interface.stdout }}"
+
+- name: Display detected interface
+  ansible.builtin.debug:
+    msg: "Using interface: {{ primary_interface }}"
+
+- name: Check if netplan file exists
+  ansible.builtin.stat:
+    path: "{{ netplan_file }}"
+  register: netplan_stat
+
+- name: Fail if netplan file doesn't exist
+  ansible.builtin.fail:
+    msg: "Netplan file {{ netplan_file }} not found"
+  when: not netplan_stat.stat.exists
+
+- name: Backup existing netplan configuration
+  ansible.builtin.copy:
+    src: "{{ netplan_file }}"
+    dest: "{{ netplan_file }}.bak"
+    remote_src: true
+    mode: '0600'
+    backup: true
+  when: netplan_backup | bool
+  become: true
+
+- name: Read current netplan configuration
+  ansible.builtin.slurp:
+    src: "{{ netplan_file }}"
+  register: netplan_content
+  become: true
+
+- name: Parse netplan YAML
+  ansible.builtin.set_fact:
+    netplan_config: "{{ netplan_content.content | b64decode | from_yaml }}"
+
+- name: Update DNS configuration in netplan
+  ansible.builtin.set_fact:
+    netplan_config: >-
+      {{
+        netplan_config | combine({
+          'network': netplan_config.network | combine({
+            'ethernets': netplan_config.network.ethernets | combine({
+              primary_interface: (netplan_config.network.ethernets[primary_interface] | default({})) | combine({
+                'nameservers': {
+                  'addresses': [dns_server]
+                }
+              })
+            })
+          })
+        }, recursive=True)
+      }}
+
+- name: Write updated netplan configuration
+  ansible.builtin.copy:
+    content: "{{ netplan_config | to_nice_yaml(indent=2) }}"
+    dest: "{{ netplan_file }}"
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+  notify: Apply netplan
+
+- name: Flush handlers to apply netplan immediately
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify DNS resolution
+  ansible.builtin.shell: resolvectl status | grep -i "DNS Servers" | grep "{{ dns_server }}"
+  register: dns_verify
+  changed_when: false
+  failed_when: false

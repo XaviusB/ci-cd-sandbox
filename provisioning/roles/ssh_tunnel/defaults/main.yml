@@ -1,0 +1,26 @@
+---
+# SSH Tunnel Jail configuration defaults
+tunnel_user: "tunnel"
+tunnel_home: "/home/{{ tunnel_user }}"
+tunnel_chroot_dir: "/var/jail/sshtunnel"
+
+# Artifact paths
+artifacts_dir: "/artifacts"
+tunnel_key_private: "{{ artifacts_dir }}/ssh-tunnel-key"
+tunnel_key_public: "{{ artifacts_dir }}/ssh-tunnel-key.pub"
+tunnel_info_file: "{{ artifacts_dir }}/ssh-tunnel-info.txt"
+
+# SSH configuration
+sshd_config_path: "/etc/ssh/sshd_config"
+tunnel_endpoint: "192.168.0.252"
+
+# Binaries to copy into chroot
+tunnel_chroot_binaries:
+  - /bin/bash
+  - /bin/sh
+  - /bin/ls
+  - /usr/bin/id
+  - /usr/bin/whoami
+
+# MOTD disable
+disable_motd: true

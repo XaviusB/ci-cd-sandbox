@@ -1,0 +1,43 @@
+---
+# TLS/SSL Certificate configuration defaults
+cert_domain: "devops.active"
+cert_dir: "/etc/haproxy/certs"
+artifacts_dir: "/artifacts"
+cert_validity_days: 3650
+
+# CA certificate settings
+ca_key_name: "devops-active-CA.key"
+ca_cert_name: "devops-active-CA.crt"
+ca_key_size: 4096
+ca_subject:
+  country: "US"
+  state: "DevOps"
+  locality: "Lab"
+  organization: "DevOps Local"
+  organizational_unit: "CA"
+  common_name: "DevOps Local CA"
+
+# Server certificate settings
+server_key_size: 4096
+server_subject:
+  country: "US"
+  state: "DevOps"
+  locality: "Lab"
+  organization: "DevOps Local"
+  organizational_unit: "HAProxy"
+  common_name: "{{ cert_domain }}"
+
+# Subject Alternative Names
+cert_san_dns:
+  - "{{ cert_domain }}"
+  - "*.{{ cert_domain }}"
+  - "localhost"
+
+# Output files
+server_key_name: "{{ cert_domain }}.key"
+server_csr_name: "{{ cert_domain }}.csr"
+server_cert_name: "{{ cert_domain }}.crt"
+server_pem_name: "{{ cert_domain }}.pem"
+
+# Copy CA to artifacts
+copy_ca_to_artifacts: true

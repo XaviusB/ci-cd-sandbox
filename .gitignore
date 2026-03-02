@@ -1,0 +1,7 @@
+**/?/
+**/.cache/
+**/output*/
+asciidoctor-extensions-lab
+.vagrant
+artifacts
+.venv

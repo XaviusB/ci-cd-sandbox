@@ -1,0 +1,13 @@
+-Xms{{ nexus_jvm_heap_min }}
+-Xmx{{ nexus_jvm_heap_max }}
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=30
+-XX:InitiatingHeapOccupancyPercent=35
+-XX:+ParallelRefProcEnabled
+-XX:+UnlockDiagnosticVMOptions
+-Dkaraf.data={{ nexus_data_dir }}
+-Djava.io.tmpdir={{ nexus_data_dir }}/tmp
+-XX:LogFile={{ nexus_data_dir }}/log/jvm.log
+-Dkaraf.log={{ nexus_data_dir }}/log
+-Djava.util.prefs.userRoot={{ nexus_data_dir }}/javaprefs
+{{ nexus_jvm_extra_opts }}

@@ -1,0 +1,68 @@
+---
+# Example playbook showing different ways to use the Nexus role
+
+# Basic installation with defaults
+- name: Install Nexus with default settings
+  hosts: nexus_servers
+  become: true
+  roles:
+    - nexus
+
+---
+# Custom configuration example
+- name: Install Nexus with custom configuration
+  hosts: nexus_servers
+  become: true
+  roles:
+    - role: nexus
+      vars:
+        nexus_version: "3.89.0-09"
+        nexus_port: 8081
+        nexus_jvm_heap_min: "2048m"
+        nexus_jvm_heap_max: "4096m"
+        nexus_admin_password: "CustomSecurePassword123!"
+        nexus_docker_repo_name: "docker-private"
+        nexus_docker_repo_http_port: 8082
+
+---
+# Nexus without Docker repository
+- name: Install Nexus without Docker support
+  hosts: nexus_servers
+  become: true
+  roles:
+    - role: nexus
+      vars:
+        nexus_docker_repo_enabled: false
+
+---
+# Production setup with custom users
+- name: Production Nexus setup
+  hosts: nexus_prod
+  become: true
+  roles:
+    - role: nexus
+      vars:
+        nexus_version: "3.89.0-09"
+        nexus_jvm_heap_min: "4096m"
+        nexus_jvm_heap_max: "8192m"
+        nexus_admin_password: "{{ vault_nexus_admin_password }}"
+        nexus_docker_repo_name: "docker-prod"
+        nexus_docker_readonly_user: "prod-reader"
+        nexus_docker_readonly_password: "{{ vault_docker_reader_password }}"
+        nexus_docker_writer_user: "prod-writer"
+        nexus_docker_writer_password: "{{ vault_docker_writer_password }}"
+        nexus_export_credentials: false  # Don't export when using vault
+
+---
+# With DNS client role for internal DNS resolution
+- name: Nexus with DNS client
+  hosts: nexus_servers
+  become: true
+  roles:
+    - role: dns_client
+      vars:
+        dns_servers:
+          - "10.0.0.10"
+    - role: nexus
+      vars:
+        nexus_docker_repo_name: "docker-hosted"

@@ -1,0 +1,74 @@
+---
+- name: Install HAProxy and dependencies
+  ansible.builtin.apt:
+    name: "{{ haproxy_dependencies }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 86400
+  become: true
+
+- name: Ensure certificate directory exists
+  ansible.builtin.file:
+    path: "{{ haproxy_cert_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  become: true
+
+- name: Check if certificate PEM bundle exists
+  ansible.builtin.stat:
+    path: "{{ haproxy_cert_pem }}"
+  register: haproxy_cert_stat
+
+- name: Fail if certificate not found
+  ansible.builtin.fail:
+    msg: |
+      Certificate PEM bundle not found at {{ haproxy_cert_pem }}.
+      Please run the tls_certificates role first to generate certificates.
+  when: not haproxy_cert_stat.stat.exists
+
+- name: Create HAProxy configuration
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ haproxy_config_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'haproxy -c -f %s'
+  become: true
+  notify: Restart haproxy
+
+- name: Enable HAProxy service
+  ansible.builtin.service:
+    name: haproxy
+    enabled: "{{ haproxy_enable_service }}"
+  become: true
+
+- name: Ensure HAProxy is started
+  ansible.builtin.service:
+    name: haproxy
+    state: started
+  become: true
+
+- name: Display HAProxy information
+  ansible.builtin.debug:
+    msg: |
+      ==========================================
+      HAProxy setup complete
+
+      Configuration: {{ haproxy_config_file }}
+      Certificate: {{ haproxy_cert_pem }}
+
+      Frontends:
+        - HTTP:          :{{ haproxy_frontend_http_port }}
+        - HTTPS:         :{{ haproxy_frontend_https_port }}
+        - K8s API:       :{{ haproxy_frontend_k8s_api_port }}
+        - Gitea SSH:     :{{ haproxy_frontend_gitea_ssh_port }}
+        - Browser Proxy: :{{ haproxy_frontend_browser_proxy_port }}
+
+      Routing:
+        - {{ haproxy_domain_nexus }} → nexus ({{ haproxy_backend_nexus_host }}:{{ haproxy_backend_nexus_port }})
+        - {{ haproxy_domain_gitea }} → gitea ({{ haproxy_backend_gitea_host }}:{{ haproxy_backend_gitea_http_port }})
+        - default → kube ({{ haproxy_backend_kube_host }}:{{ haproxy_backend_kube_http_port }})
+      ==========================================

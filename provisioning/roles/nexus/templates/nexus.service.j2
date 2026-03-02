@@ -1,0 +1,26 @@
+[Unit]
+Description=Nexus Repository Manager
+After=network.target
+
+[Service]
+Type=forking
+User={{ nexus_user }}
+Group={{ nexus_group }}
+Environment="NEXUS_HOME={{ nexus_home }}"
+Environment="NEXUS_DATA={{ nexus_data_dir }}"
+Environment="JAVA_HOME={{ nexus_java_home }}"
+WorkingDirectory={{ nexus_data_dir }}
+
+ExecStart={{ nexus_home }}/bin/nexus start
+ExecStop={{ nexus_home }}/bin/nexus stop
+ExecReload={{ nexus_home }}/bin/nexus restart
+
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

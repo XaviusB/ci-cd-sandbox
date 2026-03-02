@@ -1,0 +1,5 @@
+---
+# DNS client configuration defaults
+dns_server: "192.168.56.10"
+netplan_file: "/etc/netplan/50-vagrant.yaml"
+netplan_backup: true

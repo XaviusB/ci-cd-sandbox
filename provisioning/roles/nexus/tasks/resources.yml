@@ -1,0 +1,419 @@
+---
+- name: Wait for Nexus API to be available
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/status"
+    status_code: 200
+    timeout: 10
+  register: nexus_api_check
+  until: nexus_api_check.status == 200
+  retries: "{{ nexus_api_retries }}"
+  delay: "{{ nexus_api_delay }}"
+  changed_when: false
+  failed_when: false
+
+- name: Display API check result
+  ansible.builtin.debug:
+    msg: "Nexus API status: {{ nexus_api_check.status | default('unreachable') }}"
+
+- name: Check if admin password file exists
+  ansible.builtin.stat:
+    path: "{{ nexus_data_dir }}/admin.password"
+  register: admin_password_file
+  become: true
+
+- name: Read bootstrap admin password
+  ansible.builtin.slurp:
+    src: "{{ nexus_data_dir }}/admin.password"
+  register: bootstrap_password
+  become: true
+  when: admin_password_file.stat.exists
+  no_log: true
+
+- name: Set bootstrap password fact
+  ansible.builtin.set_fact:
+    nexus_bootstrap_password: "{{ bootstrap_password.content | b64decode | trim }}"
+  when: admin_password_file.stat.exists
+
+- name: Check if admin password already changed
+  ansible.builtin.stat:
+    path: "{{ artifacts_dir }}/nexus-admin-password.txt"
+  register: artifacts_admin_password
+  become: true
+
+- name: Read existing admin password from artifacts
+  ansible.builtin.slurp:
+    src: "{{ artifacts_dir }}/nexus-admin-password.txt"
+  register: existing_admin_password
+  become: true
+  when: artifacts_admin_password.stat.exists
+  no_log: true
+
+- name: Set admin password from artifacts
+  ansible.builtin.set_fact:
+    nexus_current_admin_password: "{{ (existing_admin_password.content | b64decode).split(':')[1] | trim }}"
+  when: artifacts_admin_password.stat.exists
+  no_log: true
+- name: Generate random admin password
+  ansible.builtin.set_fact:
+    nexus_generated_admin_password: "{{ lookup('password', '/dev/null length=' ~ nexus_admin_password_length ~ ' chars=ascii_letters,digits') }}"
+  when:
+    - nexus_admin_password == ""
+    - not artifacts_admin_password.stat.exists
+  no_log: true
+
+- name: Set admin password to use
+  ansible.builtin.set_fact:
+    nexus_password_to_use: "{{ nexus_current_admin_password | default(nexus_admin_password if nexus_admin_password != '' else nexus_generated_admin_password) }}"
+  no_log: true
+
+- name: Debug password change conditions
+  ansible.builtin.debug:
+    msg:
+      - "Admin password file exists: {{ admin_password_file.stat.exists }}"
+      - "Artifacts admin password exists: {{ artifacts_admin_password.stat.exists }}"
+      - "Will attempt password change: {{ admin_password_file.stat.exists and not artifacts_admin_password.stat.exists }}"
+
+- name: Change default admin password
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/users/admin/change-password"
+    method: PUT
+    user: admin
+    password: "{{ nexus_bootstrap_password }}"
+    body: "{{ nexus_password_to_use }}"
+    force_basic_auth: true
+    status_code: [204, 403]
+    headers:
+      Content-Type: "text/plain"
+    timeout: 30
+  register: password_change
+  until: password_change.status in [204, 403]
+  retries: 10
+  delay: 5
+  when:
+    - admin_password_file.stat.exists
+    - not artifacts_admin_password.stat.exists
+  failed_when: password_change.status not in [204, 403]
+- name: Remove bootstrap password file
+  ansible.builtin.file:
+    path: "{{ nexus_data_dir }}/admin.password"
+    state: absent
+  become: true
+  when:
+    - admin_password_file.stat.exists
+    - password_change is defined
+    - password_change is not skipped
+    - password_change.status is defined
+    - password_change.status == 204
+
+- name: Create artifacts directory
+  ansible.builtin.file:
+    path: "{{ artifacts_dir }}"
+    state: directory
+    mode: '0755'
+  become: true
+  when: nexus_export_credentials | bool
+
+- name: Export admin credentials to artifacts
+  ansible.builtin.copy:
+    content: "{{ nexus_admin_user }}:{{ nexus_password_to_use }}\n"
+    dest: "{{ artifacts_dir }}/nexus-admin-password.txt"
+    mode: '0600'
+  become: true
+  when:
+    - nexus_export_credentials | bool
+    - password_change is defined
+    - password_change is not skipped
+    - password_change.status is defined
+    - password_change.status == 204
+
+- name: Get current active realms
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/realms/active"
+    method: GET
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    force_basic_auth: true
+    status_code: [200]
+    timeout: 30
+  register: current_realms
+  changed_when: false
+
+- name: Enable Docker Bearer Token Realm
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/realms/active"
+    method: PUT
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body: "{{ (current_realms.json + ['DockerToken']) | unique }}"
+    force_basic_auth: true
+    status_code: [204]
+    timeout: 30
+  register: realm_update
+  when: "'DockerToken' not in current_realms.json"
+  changed_when: realm_update.status == 204
+
+- name: Generate Docker readonly user password
+  ansible.builtin.set_fact:
+    nexus_docker_readonly_password_generated: "{{ lookup('password', '/dev/null length=' ~ nexus_admin_password_length ~ ' chars=ascii_letters,digits') }}"
+  when: nexus_docker_readonly_password == ""
+
+- name: Generate Docker writer user password
+  ansible.builtin.set_fact:
+    nexus_docker_writer_password_generated: "{{ lookup('password', '/dev/null length=' ~ nexus_admin_password_length ~ ' chars=ascii_letters,digits') }}"
+  when: nexus_docker_writer_password == ""
+
+- name: Set Docker user passwords
+  ansible.builtin.set_fact:
+    nexus_docker_ro_password: "{{ nexus_docker_readonly_password if nexus_docker_readonly_password != '' else nexus_docker_readonly_password_generated }}"
+    nexus_docker_rw_password: "{{ nexus_docker_writer_password if nexus_docker_writer_password != '' else nexus_docker_writer_password_generated }}"
+
+- name: Create Docker hosted repository
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/repositories/docker/hosted"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      name: "{{ nexus_docker_repo_name }}"
+      online: true
+      storage:
+        blobStoreName: "default"
+        strictContentTypeValidation: true
+        writePolicy: "ALLOW"
+      cleanup:
+        policyNames: []
+      docker:
+        v1Enabled: false
+        forceBasicAuth: true
+        httpPort: "{{ nexus_docker_repo_http_port }}"
+        httpsPort: "{{ nexus_docker_repo_https_port }}"
+      component:
+        proprietaryComponents: false
+    force_basic_auth: true
+    status_code: [201, 400]
+    timeout: 30
+  register: docker_repo_create
+  changed_when: docker_repo_create.status == 201
+
+- name: Create Docker proxy repository
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/repositories/docker/proxy"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      name: "{{ nexus_docker_proxy_name }}"
+      online: true
+      storage:
+        blobStoreName: "default"
+        strictContentTypeValidation: true
+      proxy:
+        remoteUrl: "{{ nexus_docker_proxy_url }}"
+        contentMaxAge: 1440
+        metadataMaxAge: 1440
+      negativeCache:
+        enabled: true
+        timeToLive: 1440
+      httpClient:
+        blocked: false
+        autoBlock: true
+        connection:
+          retries: 3
+          timeout: 60
+      docker:
+        v1Enabled: false
+        forceBasicAuth: true
+        httpPort: "{{ nexus_docker_proxy_http_port }}"
+        httpsPort: "{{ nexus_docker_proxy_https_port }}"
+      dockerProxy:
+        indexType: "{{ nexus_docker_proxy_index_type }}"
+        cacheForeignLayers: true
+        foreignLayerUrlWhitelist: []
+    force_basic_auth: true
+    status_code: [201, 400]
+    timeout: 30
+  register: docker_proxy_create
+  changed_when: docker_proxy_create.status == 201
+  when: nexus_docker_proxy_enabled | bool
+
+- name: Create Docker group repository
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/repositories/docker/group"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      name: "{{ nexus_docker_group_name }}"
+      online: true
+      storage:
+        blobStoreName: "default"
+        strictContentTypeValidation: true
+      group:
+        memberNames: "{{ nexus_docker_group_members }}"
+      docker:
+        v1Enabled: false
+        forceBasicAuth: true
+        httpPort: "{{ nexus_docker_group_http_port }}"
+        httpsPort: "{{ nexus_docker_group_https_port }}"
+    force_basic_auth: true
+    status_code: [201, 400]
+    timeout: 30
+  register: docker_group_create
+  changed_when: docker_group_create.status == 201
+  when: nexus_docker_group_enabled | bool
+
+- name: Build readonly role privileges list
+  ansible.builtin.set_fact:
+    docker_ro_privileges: >-
+      {{
+        [
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-browse',
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-read'
+        ] +
+        (
+          [
+            'nx-repository-view-docker-' + nexus_docker_proxy_name + '-browse',
+            'nx-repository-view-docker-' + nexus_docker_proxy_name + '-read'
+          ] if (nexus_docker_proxy_enabled | bool and docker_proxy_create is defined and docker_proxy_create.status == 201) else []
+        ) +
+        (
+          [
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-browse',
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-read'
+          ] if (nexus_docker_group_enabled | bool and docker_group_create is defined and docker_group_create.status == 201) else []
+        )
+      }}
+
+- name: Build read-write role privileges list
+  ansible.builtin.set_fact:
+    docker_rw_privileges: >-
+      {{
+        [
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-browse',
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-read',
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-add',
+          'nx-repository-view-docker-' + nexus_docker_repo_name + '-edit'
+        ] +
+        (
+          [
+            'nx-repository-view-docker-' + nexus_docker_proxy_name + '-browse',
+            'nx-repository-view-docker-' + nexus_docker_proxy_name + '-read'
+          ] if (nexus_docker_proxy_enabled | bool and docker_proxy_create is defined and docker_proxy_create.status == 201) else []
+        ) +
+        (
+          [
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-browse',
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-read',
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-add',
+            'nx-repository-view-docker-' + nexus_docker_group_name + '-edit'
+          ] if (nexus_docker_group_enabled | bool and docker_group_create is defined and docker_group_create.status == 201) else []
+        )
+      }}
+
+- name: Create Docker readonly role
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/roles"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      id: "docker-all-ro"
+      name: "Docker All Repositories Read"
+      description: "Read-only access to all Docker repositories"
+      privileges: "{{ docker_ro_privileges }}"
+      roles: []
+    force_basic_auth: true
+    status_code: [200, 400]
+    timeout: 30
+  register: ro_role_create
+  changed_when: ro_role_create.status == 200
+
+- name: Create Docker read-write role
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/roles"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      id: "docker-all-rw"
+      name: "Docker All Repositories Write"
+      description: "Write access to all Docker repositories"
+      privileges: "{{ docker_rw_privileges }}"
+      roles: []
+    force_basic_auth: true
+    status_code: [200, 400]
+    timeout: 30
+  register: rw_role_create
+  changed_when: rw_role_create.status == 200
+
+- name: Create Docker readonly user
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/users"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      userId: "{{ nexus_docker_readonly_user }}"
+      firstName: "Docker"
+      lastName: "Reader"
+      emailAddress: "{{ nexus_docker_readonly_user }}@local"
+      status: "active"
+      password: "{{ nexus_docker_ro_password }}"
+      roles:
+        - "docker-all-ro"
+    force_basic_auth: true
+    status_code: [200, 400]
+    timeout: 30
+  register: ro_user_create
+  changed_when: ro_user_create.status == 200
+
+- name: Create Docker writer user
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/service/rest/v1/security/users"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_password_to_use }}"
+    body_format: json
+    body:
+      userId: "{{ nexus_docker_writer_user }}"
+      firstName: "Docker"
+      lastName: "Writer"
+      emailAddress: "{{ nexus_docker_writer_user }}@local"
+      status: "active"
+      password: "{{ nexus_docker_rw_password }}"
+      roles:
+        - "docker-all-rw"
+    force_basic_auth: true
+    status_code: [200, 400]
+    timeout: 30
+  register: rw_user_create
+  changed_when: rw_user_create.status == 200
+
+- name: Export Docker readonly credentials
+  ansible.builtin.copy:
+    content: "{{ nexus_docker_readonly_user }}:{{ nexus_docker_ro_password }}\n"
+    dest: "{{ artifacts_dir }}/nexus-readonly-credentials.txt"
+    mode: '0600'
+  become: true
+  when:
+    - nexus_export_credentials | bool
+    - ro_user_create.status == 200
+  no_log: true
+
+
+- name: Export Docker writer credentials
+  ansible.builtin.copy:
+    content: "{{ nexus_docker_writer_user }}:{{ nexus_docker_rw_password }}\n"
+    dest: "{{ artifacts_dir }}/nexus-upload-credentials.txt"
+    mode: '0600'
+  become: true
+  when:
+    - nexus_export_credentials | bool
+    - rw_user_create.status == 200

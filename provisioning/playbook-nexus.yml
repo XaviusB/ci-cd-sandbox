@@ -1,0 +1,9 @@
+---
+# Nexus VM complete setup playbook
+- name: Setup Nexus server
+  hosts: all
+  become: true
+
+  roles:
+    - role: dns_client
+    - role: nexus

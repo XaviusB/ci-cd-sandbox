@@ -1,0 +1,229 @@
+---
+- name: Find MOTD scripts
+  ansible.builtin.find:
+    paths: /etc/update-motd.d
+    file_type: file
+  register: motd_scripts
+  become: true
+  when: disable_motd | bool
+
+- name: Disable MOTD scripts
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: 'a-x'
+  loop: "{{ motd_scripts.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  become: true
+  when:
+    - disable_motd | bool
+    - motd_scripts.files is defined
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 86400
+  become: true
+
+- name: Install OpenSSH server
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+  become: true
+
+- name: Create tunnel user
+  ansible.builtin.user:
+    name: "{{ tunnel_user }}"
+    home: "{{ tunnel_home }}"
+    shell: /bin/bash
+    create_home: true
+    state: present
+  become: true
+
+- name: Check if SSH key exists
+  ansible.builtin.stat:
+    path: "{{ tunnel_key_private }}"
+  register: ssh_key_exists
+
+- name: Generate SSH key pair
+  ansible.builtin.command: >
+    ssh-keygen -t ed25519
+    -f "{{ tunnel_key_private }}"
+    -N ""
+    -C "{{ tunnel_user }}@haproxy"
+  when: not ssh_key_exists.stat.exists
+  become: true
+  register: key_generated
+  changed_when: key_generated.rc == 0
+
+- name: Set permissions on private key
+  ansible.builtin.file:
+    path: "{{ tunnel_key_private }}"
+    mode: '0600'
+  become: true
+
+- name: Set permissions on public key
+  ansible.builtin.file:
+    path: "{{ tunnel_key_public }}"
+    mode: '0644'
+  become: true
+
+- name: Create chroot directory
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Create chroot home directory for user
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}/home/{{ tunnel_user }}"
+    state: directory
+    owner: "{{ tunnel_user }}"
+    group: "{{ tunnel_user }}"
+    mode: '0700'
+  become: true
+
+- name: Create chroot tmp directory
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}/tmp"
+    state: directory
+    mode: '1777'
+  become: true
+
+- name: Create chroot dev directory
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}/dev"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Create device nodes in chroot
+  ansible.builtin.shell: |
+    if [ ! -e "{{ tunnel_chroot_dir }}/dev/{{ item.name }}" ]; then
+      mknod -m {{ item.mode }} "{{ tunnel_chroot_dir }}/dev/{{ item.name }}" c {{ item.major }} {{ item.minor }}
+    fi
+  loop:
+    - { name: 'null', mode: '666', major: '1', minor: '3' }
+    - { name: 'zero', mode: '666', major: '1', minor: '5' }
+    - { name: 'tty', mode: '666', major: '5', minor: '0' }
+    - { name: 'random', mode: '666', major: '1', minor: '8' }
+    - { name: 'urandom', mode: '666', major: '1', minor: '9' }
+  become: true
+  changed_when: false
+
+- name: Create chroot etc directory
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}/etc"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Get tunnel user UID
+  ansible.builtin.command: id -u "{{ tunnel_user }}"
+  register: tunnel_uid
+  changed_when: false
+
+- name: Get tunnel user GID
+  ansible.builtin.command: id -g "{{ tunnel_user }}"
+  register: tunnel_gid
+  changed_when: false
+
+- name: Create chroot passwd file
+  ansible.builtin.copy:
+    content: |
+      root:x:0:0:root:/root:/bin/bash
+      {{ tunnel_user }}:x:{{ tunnel_uid.stdout }}:{{ tunnel_gid.stdout }}:{{ tunnel_user }}:{{ tunnel_home }}:/bin/bash
+    dest: "{{ tunnel_chroot_dir }}/etc/passwd"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Create chroot group file
+  ansible.builtin.copy:
+    content: |
+      root:x:0:
+      {{ tunnel_user }}:x:{{ tunnel_gid.stdout }}:
+    dest: "{{ tunnel_chroot_dir }}/etc/group"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Create .ssh directory in chroot
+  ansible.builtin.file:
+    path: "{{ tunnel_chroot_dir }}/home/{{ tunnel_user }}/.ssh"
+    state: directory
+    owner: "{{ tunnel_user }}"
+    group: "{{ tunnel_user }}"
+    mode: '0700'
+  become: true
+
+- name: Create .ssh directory in real home
+  ansible.builtin.file:
+    path: "{{ tunnel_home }}/.ssh"
+    state: directory
+    owner: "{{ tunnel_user }}"
+    group: "{{ tunnel_user }}"
+    mode: '0700'
+  become: true
+
+- name: Configure authorized_keys
+  ansible.builtin.copy:
+    src: "{{ tunnel_key_public }}"
+    dest: "{{ tunnel_home }}/.ssh/authorized_keys"
+    owner: "{{ tunnel_user }}"
+    group: "{{ tunnel_user }}"
+    mode: '0600'
+    remote_src: true
+  become: true
+
+- name: Copy binaries and dependencies to chroot
+  ansible.builtin.script:
+    cmd: copy-binary-to-chroot.sh "{{ item }}" "{{ tunnel_chroot_dir }}"
+  loop: "{{ tunnel_chroot_binaries }}"
+  become: true
+  changed_when: false
+
+- name: Check if SSH config has Match User block
+  ansible.builtin.shell: grep -q "Match User {{ tunnel_user }}" "{{ sshd_config_path }}"
+  register: match_user_exists
+  failed_when: false
+  changed_when: false
+
+- name: Add Match User configuration to sshd_config
+  ansible.builtin.blockinfile:
+    path: "{{ sshd_config_path }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SSH TUNNEL"
+    block: |
+      Match User {{ tunnel_user }}
+          ChrootDirectory {{ tunnel_chroot_dir }}
+          AllowTcpForwarding yes
+          PermitTTY yes
+          X11Forwarding no
+          AllowAgentForwarding no
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+  when: match_user_exists.rc != 0
+  become: true
+  notify: Restart SSH service
+
+- name: Create tunnel info file
+  ansible.builtin.template:
+    src: ssh-tunnel-info.txt.j2
+    dest: "{{ tunnel_info_file }}"
+    mode: '0600'
+  become: true
+
+- name: Enable and start SSH service
+  ansible.builtin.systemd:
+    name: ssh
+    enabled: true
+    state: started
+  become: true
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

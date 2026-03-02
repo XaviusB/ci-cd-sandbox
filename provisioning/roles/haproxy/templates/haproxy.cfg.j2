@@ -1,0 +1,93 @@
+global
+	log {{ haproxy_log_device }}	local0
+	log {{ haproxy_log_device }}	local1 notice
+	chroot {{ haproxy_chroot_dir }}
+	stats socket {{ haproxy_stats_socket }} mode 660 level admin
+	stats timeout {{ haproxy_stats_timeout }}
+	user {{ haproxy_user }}
+	group {{ haproxy_group }}
+	daemon
+
+	# Default SSL material locations
+	ca-base /etc/ssl/certs
+	crt-base /etc/ssl/private
+
+	# See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
+	ssl-default-bind-ciphers {{ haproxy_ssl_ciphers }}
+	ssl-default-bind-ciphersuites {{ haproxy_ssl_ciphersuites }}
+	ssl-default-bind-options ssl-min-ver {{ haproxy_ssl_min_ver }} no-tls-tickets
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+	timeout connect {{ haproxy_timeout_connect }}
+	timeout client  {{ haproxy_timeout_client }}
+	timeout server  {{ haproxy_timeout_server }}
+	errorfile 400 {{ haproxy_errors_dir }}/400.http
+	errorfile 403 {{ haproxy_errors_dir }}/403.http
+	errorfile 408 {{ haproxy_errors_dir }}/408.http
+	errorfile 500 {{ haproxy_errors_dir }}/500.http
+	errorfile 502 {{ haproxy_errors_dir }}/502.http
+	errorfile 503 {{ haproxy_errors_dir }}/503.http
+	errorfile 504 {{ haproxy_errors_dir }}/504.http
+
+frontend main
+	mode http
+	bind :{{ haproxy_frontend_http_port }}
+	# Bind to the generated domain PEM bundle to avoid HAProxy
+	# attempting to load CA certs which don't contain private keys.
+	bind :{{ haproxy_frontend_https_port }} ssl crt {{ haproxy_cert_pem }}
+{% if haproxy_redirect_http_to_https %}
+	http-request redirect scheme https code 301 unless { ssl_fc }
+{% endif %}
+	use_backend nexus         if { req.hdr(host) -i {{ haproxy_domain_nexus }} }
+	use_backend giteaweb      if { req.hdr(host) -i {{ haproxy_domain_gitea }} }
+	default_backend kube
+
+frontend k8s_api
+	mode tcp
+	bind :{{ haproxy_frontend_k8s_api_port }}
+	default_backend k8s_api
+
+backend k8s_api
+	mode tcp
+	server k8s1 {{ haproxy_backend_kube_host }}:{{ haproxy_backend_kube_api_port }}
+
+backend giteaweb
+	option forwardfor
+	mode http
+	server gitea {{ haproxy_backend_gitea_host }}:{{ haproxy_backend_gitea_http_port }}
+
+frontend giteassh
+	mode tcp
+	bind :{{ haproxy_frontend_gitea_ssh_port }}
+	default_backend giteassh
+	option tcplog
+
+backend giteassh
+	mode tcp
+	server gitea {{ haproxy_backend_gitea_host }}:{{ haproxy_backend_gitea_ssh_port }}
+
+frontend browser_proxy
+	mode http
+	bind :{{ haproxy_frontend_browser_proxy_port }}
+	option httplog
+	option forwardfor
+
+	# Route based on Host header
+	use_backend giteaweb      if { req.hdr(host) -i {{ haproxy_domain_gitea }} }
+
+	# Default backend
+	default_backend giteaweb
+
+backend kube
+	option forwardfor
+	mode http
+	server k8s1 {{ haproxy_backend_kube_host }}:{{ haproxy_backend_kube_http_port }} check
+
+backend nexus
+	option forwardfor
+	mode http
+	server nexus {{ haproxy_backend_nexus_host }}:{{ haproxy_backend_nexus_port }} check

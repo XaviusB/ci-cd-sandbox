@@ -1,0 +1,32 @@
+---
+# DNS server configuration defaults
+dns_domain: "devops.active"
+dns_ip: "192.168.56.10"
+dns_forwarder: "8.8.8.8"
+
+# Zone file configuration
+zone_serial: "2026020401"
+zone_ttl: "604800"
+zone_refresh: "604800"
+zone_retry: "86400"
+zone_expire: "2419200"
+zone_negative_cache: "604800"
+
+# DNS records (A records for the domain)
+dns_records:
+  - name: "haproxy"
+    ip: "{{ dns_ip }}"
+  - name: "gitea"
+    ip: "{{ dns_ip }}"
+  - name: "nexus"
+    ip: "{{ dns_ip }}"
+  - name: "runner"
+    ip: "{{ dns_ip }}"
+  - name: "kube"
+    ip: "{{ dns_ip }}"
+  - name: "k8s"
+    ip: "{{ dns_ip }}"
+
+# Wildcard record
+dns_wildcard_enabled: true
+dns_wildcard_ip: "{{ dns_ip }}"

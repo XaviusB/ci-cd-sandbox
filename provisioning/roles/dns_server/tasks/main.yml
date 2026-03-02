@@ -1,0 +1,92 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 86400  # 24 hours
+  become: true
+
+- name: Install Bind9 and utilities
+  ansible.builtin.apt:
+    name:
+      - bind9
+      - bind9utils
+      - dnsutils
+    state: present
+  become: true
+
+- name: Configure Bind9 options (forwarding)
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: bind
+    mode: '0644'
+    validate: 'named-checkconf %s'
+  become: true
+  notify:
+    - Validate bind configuration
+    - Restart bind9
+
+- name: Configure local zone
+  ansible.builtin.template:
+    src: named.conf.local.j2
+    dest: /etc/bind/named.conf.local
+    owner: root
+    group: bind
+    mode: '0644'
+    validate: 'named-checkconf %s'
+  become: true
+  notify:
+    - Validate bind configuration
+    - Restart bind9
+
+- name: Create zone file directory
+  ansible.builtin.file:
+    path: /etc/bind
+    state: directory
+    owner: root
+    group: bind
+    mode: '0755'
+  become: true
+
+- name: Create zone file for domain
+  ansible.builtin.template:
+    src: zone.db.j2
+    dest: "/etc/bind/db.{{ dns_domain }}"
+    owner: root
+    group: bind
+    mode: '0644'
+  become: true
+  notify:
+    - Validate zone file
+    - Restart bind9
+
+- name: Flush handlers to validate configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start Bind9 service
+  ansible.builtin.systemd:
+    name: named
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Wait for DNS service to be ready
+  ansible.builtin.wait_for:
+    port: 53
+    host: "{{ dns_ip }}"
+    timeout: 30
+    delay: 2
+
+- name: Test DNS resolution (internal domain)
+  ansible.builtin.command: "dig gitea.{{ dns_domain }} @{{ dns_ip }} +short"
+  register: dns_test_internal
+  changed_when: false
+  failed_when: false
+
+- name: Test DNS resolution (external domain)
+  ansible.builtin.command: "dig google.com @{{ dns_ip }} +short"
+  register: dns_test_external
+  changed_when: false
+  failed_when: false

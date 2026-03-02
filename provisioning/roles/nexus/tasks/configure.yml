@@ -1,0 +1,48 @@
+---
+- name: Create Nexus JVM options
+  ansible.builtin.template:
+    src: nexus.vmoptions.j2
+    dest: "{{ nexus_home }}/bin/nexus.vmoptions"
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    mode: '0644'
+  become: true
+  notify: Restart nexus
+
+- name: Create Nexus properties
+  ansible.builtin.template:
+    src: nexus.properties.j2
+    dest: "{{ nexus_data_dir }}/etc/nexus.properties"
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    mode: '0644'
+  become: true
+  notify: Restart nexus
+
+- name: Create Nexus systemd service
+  ansible.builtin.template:
+    src: nexus.service.j2
+    dest: /etc/systemd/system/nexus.service
+    mode: '0644'
+  become: true
+  notify:
+    - Reload systemd
+    - Restart nexus
+
+- name: Enable Nexus service
+  ansible.builtin.service:
+    name: nexus
+    enabled: "{{ nexus_service_enabled }}"
+    state: "{{ nexus_service_state }}"
+  become: true
+
+- name: Wait for Nexus to be available
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nexus_port }}/"
+    status_code: 200
+    timeout: 10
+  register: nexus_check
+  until: nexus_check.status == 200
+  retries: "{{ nexus_api_retries }}"
+  delay: "{{ nexus_api_delay }}"
+  changed_when: false

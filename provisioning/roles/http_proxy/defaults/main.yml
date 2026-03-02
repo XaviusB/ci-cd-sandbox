@@ -1,0 +1,50 @@
+---
+# HTTP Proxy (Squid) configuration defaults
+squid_port: 3128
+squid_user: "squid"
+
+# DNS server
+squid_dns_nameservers: "192.168.56.10"
+
+# Memory cache settings
+squid_cache_mem: "256 MB"
+squid_max_object_size_in_memory: "512 KB"
+
+# Disk cache settings
+squid_cache_dir: "ufs /var/spool/squid 1000 16 256"
+squid_max_object_size: "512 MB"
+
+# Performance tuning
+squid_workers: 1
+squid_max_filedescriptors: 65535
+
+# Logging
+squid_access_log: "/var/log/squid/access.log squid"
+squid_cache_log: "/var/log/squid/cache.log"
+squid_logfile_rotate: 10
+
+# Access Control Lists
+squid_local_networks:
+  - "192.168.0.0/16"
+  - "10.0.0.0/8"
+  - "172.16.0.0/12"
+  - "fc00::/7"
+  - "fe80::/10"
+
+squid_k8s_api_domain: "k8s.devops.active"
+
+squid_ssl_ports:
+  - 443
+  - 6443
+
+squid_safe_ports:
+  - 80
+  - 21
+  - 443
+  - 70
+  - 210
+  - "1025-65535"
+  - 280
+  - 488
+  - 591
+  - 777

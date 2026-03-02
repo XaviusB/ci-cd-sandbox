@@ -1,0 +1,28 @@
+---
+galaxy_info:
+  author: TP2026 DevOps Course
+  description: Install and configure Gitea Git service with MariaDB backend
+  license: MIT
+  min_ansible_version: '2.9'
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+
+  galaxy_tags:
+    - git
+    - gitea
+    - vcs
+    - devops
+    - cicd
+    - mariadb
+
+collections:
+  - community.mysql
+
+dependencies: []

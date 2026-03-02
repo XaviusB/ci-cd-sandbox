@@ -1,0 +1,30 @@
+---
+galaxy_info:
+  author: TP2026
+  description: TLS/SSL certificate generation role for creating CA and server certificates
+  company:
+  license: MIT
+  min_ansible_version: "2.9"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+
+  galaxy_tags:
+    - ssl
+    - tls
+    - certificates
+    - openssl
+    - security
+    - haproxy
+
+collections:
+  - community.crypto
+
+dependencies: []

@@ -1,0 +1,6 @@
+*.retry
+.vault_pass
+*.log
+.ansible/
+__pycache__/
+*.pyc

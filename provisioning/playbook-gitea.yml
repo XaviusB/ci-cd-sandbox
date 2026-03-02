@@ -1,0 +1,9 @@
+---
+# Gitea VM complete setup playbook
+- name: Setup Gitea server
+  hosts: gitea
+  become: true
+
+  roles:
+    - role: dns_client
+    - role: gitea

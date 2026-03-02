@@ -1,0 +1,25 @@
+---
+- name: Stop squid for validation
+  ansible.builtin.systemd:
+    name: squid
+    state: stopped
+  become: true
+  failed_when: false
+
+- name: Validate squid configuration
+  ansible.builtin.command: squid -k check
+  changed_when: false
+  become: true
+
+- name: Restart squid
+  ansible.builtin.systemd:
+    name: squid
+    state: restarted
+    daemon_reload: true
+  become: true
+
+- name: Reload squid
+  ansible.builtin.systemd:
+    name: squid
+    state: reloaded
+  become: true

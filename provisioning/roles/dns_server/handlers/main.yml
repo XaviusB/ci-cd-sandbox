@@ -1,0 +1,23 @@
+---
+- name: Restart bind9
+  ansible.builtin.systemd:
+    name: named
+    state: restarted
+    daemon_reload: true
+  become: true
+
+- name: Reload bind9
+  ansible.builtin.systemd:
+    name: named
+    state: reloaded
+  become: true
+
+- name: Validate bind configuration
+  ansible.builtin.command: named-checkconf
+  changed_when: false
+  become: true
+
+- name: Validate zone file
+  ansible.builtin.command: "named-checkzone {{ dns_domain }} /etc/bind/db.{{ dns_domain }}"
+  changed_when: false
+  become: true

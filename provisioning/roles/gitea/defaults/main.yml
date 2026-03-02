@@ -1,0 +1,75 @@
+---
+# Gitea version
+gitea_version: "1.25.4"
+
+# Gitea user and directories
+gitea_user: "git"
+gitea_group: "git"
+gitea_home: "/home/git"
+gitea_install_dir: "/usr/local/bin"
+gitea_data_dir: "/var/lib/gitea"
+gitea_config_dir: "/etc/gitea"
+
+# Gitea admin credentials
+gitea_admin_user: "xavier"
+gitea_admin_email: "me@devops.active"
+# Password will be auto-generated if not provided
+gitea_admin_password: ""
+gitea_admin_password_length: 16
+
+# MariaDB settings
+gitea_db_type: "mysql"
+gitea_db_name: "gitea"
+gitea_db_user: "gitea"
+gitea_db_password: "gitea"
+gitea_db_host: "127.0.0.1:3306"
+
+# Gitea server settings
+gitea_domain: "gitea.devops.active"
+gitea_http_port: 3000
+gitea_http_addr: "0.0.0.0"
+gitea_ssh_port: 2222
+gitea_disable_ssh: false
+gitea_start_ssh_server: true
+gitea_root_url: "https://gitea.devops.active/"
+
+# Repository settings
+gitea_repository_root: "/var/lib/gitea/data/gitea-repositories"
+
+# LFS settings
+gitea_lfs_enabled: true
+gitea_lfs_path: "/var/lib/gitea/data/lfs"
+gitea_lfs_jwt_secret: "aSE03nQ_69ULnK1CW2wmLIXLofZ2JRKOMrQuaGiMYng"
+
+# Service settings
+gitea_register_email_confirm: false
+gitea_enable_notify_mail: false
+gitea_disable_registration: false
+gitea_email_domain_allowlist: "hesias.fr,devops.active"
+gitea_register_manual_confirm: true
+gitea_require_signin_view: true
+gitea_enable_captcha: true
+
+# Security settings
+gitea_internal_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NjE3NzA3NDV9.i8VP-KzdPUZLVPKHYNYBPx9LJt6-cse8y7hqJcorumE"
+gitea_oauth2_jwt_secret: "SbpHPvUYMN_wyzTIxBM83kET1nM4Bm4MSMM1pSv9nPM"
+gitea_password_hash_algo: "pbkdf2"
+
+# Artifacts directory
+artifacts_dir: "/artifacts"
+gitea_export_credentials: true
+gitea_generate_runner_token: true
+
+# Dependencies
+gitea_dependencies:
+  - git
+  - curl
+  - mariadb-server
+  - net-tools
+  - python3-pymysql
+
+# Backup settings
+gitea_enable_backup: true
+gitea_backup_dir: "/var/backups/gitea"
+gitea_backup_cron_hour: "2"
+gitea_backup_cron_minute: "30"

@@ -1,0 +1,25 @@
+; Ansible managed - Zone file for {{ dns_domain }}
+$TTL {{ zone_ttl }}
+@   IN  SOA ns1.{{ dns_domain }}. admin.{{ dns_domain }}. (
+        {{ zone_serial }} ; Serial
+        {{ zone_refresh }}     ; Refresh
+        {{ zone_retry }}      ; Retry
+        {{ zone_expire }}    ; Expire
+        {{ zone_negative_cache }} )   ; Negative Cache TTL
+
+; Name server
+@       IN  NS  ns1.{{ dns_domain }}.
+ns1     IN  A   {{ dns_ip }}
+
+; Root domain
+@       IN  A   {{ dns_ip }}
+
+; DNS records
+{% for record in dns_records %}
+{{ "%-8s"|format(record.name) }}IN  A   {{ record.ip }}
+{% endfor %}
+
+{% if dns_wildcard_enabled %}
+; Wildcard
+*       IN  A   {{ dns_wildcard_ip }}
+{% endif %}

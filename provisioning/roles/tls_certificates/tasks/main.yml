@@ -1,0 +1,126 @@
+---
+- name: Install OpenSSL and Python cryptography
+  ansible.builtin.apt:
+    name:
+      - openssl
+      - python3-cryptography
+    state: present
+    update_cache: true
+    cache_valid_time: 86400
+  become: true
+
+- name: Create certificate directory
+  ansible.builtin.file:
+    path: "{{ cert_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  become: true
+
+- name: Generate CA private key
+  community.crypto.openssl_privatekey:
+    path: "{{ cert_dir }}/{{ ca_key_name }}"
+    size: "{{ ca_key_size }}"
+    type: RSA
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+
+- name: Generate CA certificate signing request
+  community.crypto.openssl_csr:
+    path: "{{ cert_dir }}/{{ ca_key_name | regex_replace('\\.key$', '.csr') }}"
+    privatekey_path: "{{ cert_dir }}/{{ ca_key_name }}"
+    subject:
+      C: "{{ ca_subject.country }}"
+      ST: "{{ ca_subject.state }}"
+      L: "{{ ca_subject.locality }}"
+      O: "{{ ca_subject.organization }}"
+      OU: "{{ ca_subject.organizational_unit }}"
+      CN: "{{ ca_subject.common_name }}"
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    key_usage_critical: true
+  become: true
+
+- name: Generate CA certificate (self-signed)
+  community.crypto.x509_certificate:
+    path: "{{ cert_dir }}/{{ ca_cert_name }}"
+    csr_path: "{{ cert_dir }}/{{ ca_key_name | regex_replace('\\.key$', '.csr') }}"
+    privatekey_path: "{{ cert_dir }}/{{ ca_key_name }}"
+    provider: selfsigned
+    selfsigned_not_after: "+{{ cert_validity_days }}d"
+    selfsigned_digest: sha256
+  become: true
+
+- name: Generate server private key
+  community.crypto.openssl_privatekey:
+    path: "{{ cert_dir }}/{{ server_key_name }}"
+    size: "{{ server_key_size }}"
+    type: RSA
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+
+- name: Generate certificate signing request with SAN
+  community.crypto.openssl_csr:
+    path: "{{ cert_dir }}/{{ server_csr_name }}"
+    privatekey_path: "{{ cert_dir }}/{{ server_key_name }}"
+    subject:
+      C: "{{ server_subject.country }}"
+      ST: "{{ server_subject.state }}"
+      L: "{{ server_subject.locality }}"
+      O: "{{ server_subject.organization }}"
+      OU: "{{ server_subject.organizational_unit }}"
+      CN: "{{ cert_domain }}"
+    subject_alt_name: "{{ cert_san_dns | map('regex_replace', '^(.*)$', 'DNS:\\1') | list }}"
+  become: true
+
+- name: Sign server certificate with CA
+  community.crypto.x509_certificate:
+    path: "{{ cert_dir }}/{{ server_cert_name }}"
+    csr_path: "{{ cert_dir }}/{{ server_csr_name }}"
+    provider: ownca
+    ownca_path: "{{ cert_dir }}/{{ ca_cert_name }}"
+    ownca_privatekey_path: "{{ cert_dir }}/{{ ca_key_name }}"
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    ownca_digest: sha256
+  become: true
+  register: server_cert
+
+- name: Create HAProxy PEM bundle (cert + key)
+  ansible.builtin.shell: |
+    cat "{{ cert_dir }}/{{ server_cert_name }}" "{{ cert_dir }}/{{ server_key_name }}" > "{{ cert_dir }}/{{ server_pem_name }}"
+  become: true
+  when: server_cert.changed
+  changed_when: true
+
+- name: Ensure PEM bundle exists
+  ansible.builtin.shell: |
+    cat "{{ cert_dir }}/{{ server_cert_name }}" "{{ cert_dir }}/{{ server_key_name }}" > "{{ cert_dir }}/{{ server_pem_name }}"
+  args:
+    creates: "{{ cert_dir }}/{{ server_pem_name }}"
+  become: true
+
+- name: Set permissions on PEM bundle
+  ansible.builtin.file:
+    path: "{{ cert_dir }}/{{ server_pem_name }}"
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+
+- name: Copy CA certificate to artifacts
+  ansible.builtin.copy:
+    src: "{{ cert_dir }}/{{ ca_cert_name }}"
+    dest: "{{ artifacts_dir }}/{{ ca_cert_name }}"
+    remote_src: true
+    mode: '0644'
+  when: copy_ca_to_artifacts | bool
+  become: true

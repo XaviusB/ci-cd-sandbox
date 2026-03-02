@@ -1,0 +1,13 @@
+---
+- name: Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+
+- name: Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+
+- name: Flush handlers to ensure Nexus is running
+  ansible.builtin.meta: flush_handlers
+
+- name: Include resources configuration tasks
+  ansible.builtin.include_tasks: resources.yml
+  when: nexus_docker_repo_enabled | bool

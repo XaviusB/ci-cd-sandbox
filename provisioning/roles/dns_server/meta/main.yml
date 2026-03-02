@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  author: TP2026
+  description: DNS server configuration role using Bind9 for Ubuntu/Debian systems
+  company:
+  license: MIT
+  min_ansible_version: "2.9"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+
+  galaxy_tags:
+    - dns
+    - bind9
+    - networking
+    - nameserver
+    - system
+
+dependencies: []

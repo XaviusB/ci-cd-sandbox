@@ -1,0 +1,129 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name: "{{ nexus_dependencies }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 86400
+  become: true
+
+- name: Create nexus group
+  ansible.builtin.group:
+    name: "{{ nexus_group }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create nexus user
+  ansible.builtin.user:
+    name: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    comment: "Nexus Repository Manager"
+    home: "{{ nexus_data_dir }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+  become: true
+
+- name: Create Nexus data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    mode: '0755'
+  loop:
+    - "{{ nexus_data_dir }}"
+    - "{{ nexus_data_dir }}/etc"
+    - "{{ nexus_data_dir }}/tmp"
+    - "{{ nexus_data_dir }}/log"
+  become: true
+
+- name: Check if Nexus home exists and is a directory
+  ansible.builtin.stat:
+    path: "{{ nexus_home }}"
+  register: nexus_home_stat
+
+- name: Remove Nexus home directory if it exists (will be replaced with symlink)
+  ansible.builtin.file:
+    path: "{{ nexus_home }}"
+    state: absent
+  become: true
+  when:
+    - nexus_home_stat.stat.exists
+    - nexus_home_stat.stat.isdir is defined
+    - nexus_home_stat.stat.isdir
+    - not nexus_home_stat.stat.islnk
+
+- name: Check if Nexus binary exists
+  ansible.builtin.stat:
+    path: "{{ nexus_home }}/bin/nexus"
+  register: nexus_binary
+
+- name: Get current Nexus version
+  ansible.builtin.shell: |
+    grep "nexus-version=" "{{ nexus_home }}/bin/nexus" | cut -d= -f2
+  register: nexus_current_version
+  changed_when: false
+  failed_when: false
+  when: nexus_binary.stat.exists
+
+- name: Set Nexus installed version
+  ansible.builtin.set_fact:
+    nexus_installed_version: "{{ nexus_current_version.stdout | default('') }}"
+  when: nexus_binary.stat.exists
+
+- name: Stop Nexus service before upgrade
+  ansible.builtin.service:
+    name: nexus
+    state: stopped
+  become: true
+  when:
+    - nexus_binary.stat.exists
+    - nexus_installed_version is defined
+    - nexus_installed_version != nexus_version
+  failed_when: false
+
+- name: Download and extract Nexus
+  ansible.builtin.unarchive:
+    src: "{{ nexus_download_url }}"
+    dest: "/opt"
+    remote_src: true
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    creates: "/opt/nexus-{{ nexus_version }}"
+  become: true
+  when: >
+    not nexus_binary.stat.exists or
+    (nexus_installed_version is defined and nexus_installed_version != nexus_version)
+  notify: Restart nexus
+
+- name: Create symlink to Nexus installation
+  ansible.builtin.file:
+    src: "/opt/nexus-{{ nexus_version }}"
+    dest: "{{ nexus_home }}"
+    state: link
+    force: true
+  become: true
+  when: >
+    not nexus_binary.stat.exists or
+    (nexus_installed_version is defined and nexus_installed_version != nexus_version)
+  notify: Restart nexus
+
+- name: Set ownership of Nexus installation directory
+  ansible.builtin.file:
+    path: "/opt/nexus-{{ nexus_version }}"
+    state: directory
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    recurse: true
+  become: true
+
+- name: Set ownership of Nexus data directory
+  ansible.builtin.file:
+    path: "{{ nexus_data_dir }}"
+    state: directory
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    recurse: true
+  become: true

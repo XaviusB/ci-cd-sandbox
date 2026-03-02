@@ -1,0 +1,19 @@
+// Ansible managed - named.conf.options template
+options {
+    directory "/var/cache/bind";
+
+    recursion yes;
+    allow-recursion { any; };
+    allow-query { any; };
+
+    forwarders {
+        {{ dns_forwarder }};
+    };
+
+    forward only;
+
+    dnssec-validation auto;
+
+    listen-on { any; };
+    listen-on-v6 { any; };
+};

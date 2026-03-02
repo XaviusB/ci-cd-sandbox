@@ -1,0 +1,13 @@
+---
+# HAProxy VM complete setup playbook
+- name: Setup HAProxy infrastructure
+  hosts: haproxy
+  become: true
+
+  roles:
+    - role: dns_server
+    - role: dns_client
+    - role: haproxy
+    - role: http_proxy
+    - role: ssh_tunnel
+    - role: tls_certificates

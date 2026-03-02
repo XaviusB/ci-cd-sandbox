@@ -1,0 +1,78 @@
+---
+# Nexus version
+nexus_version: "3.89.0-09"
+nexus_download_url: "https://cdn.download.sonatype.com/repository/downloads-prod-group/3/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
+
+# Nexus user and directories
+nexus_user: "nexus"
+nexus_group: "nexus"
+nexus_home: "/opt/nexus"
+nexus_data_dir: "/opt/sonatype-work/nexus3"
+
+# Nexus server settings
+nexus_port: 8081
+nexus_host: "0.0.0.0"
+nexus_context_path: "/"
+
+# JVM settings
+nexus_jvm_heap_min: "1024m"
+nexus_jvm_heap_max: "1024m"
+nexus_jvm_extra_opts: ""
+
+# Java settings
+nexus_java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
+nexus_java_package: "openjdk-11-jdk"
+
+# Admin credentials
+nexus_admin_user: "admin"
+nexus_admin_password: ""  # Auto-generated if empty
+nexus_admin_password_length: 16
+
+# Docker repository settings
+nexus_docker_repo_enabled: true
+nexus_docker_repo_name: "docker-hosted"
+nexus_docker_repo_http_port: null
+nexus_docker_repo_https_port: null
+
+# Docker proxy repository settings
+nexus_docker_proxy_enabled: true
+nexus_docker_proxy_name: "docker-proxy"
+nexus_docker_proxy_url: "https://registry-1.docker.io"
+nexus_docker_proxy_index_type: "HUB"  # HUB, REGISTRY, or CUSTOM
+nexus_docker_proxy_http_port: null
+nexus_docker_proxy_https_port: null
+
+# Docker group repository settings
+nexus_docker_group_enabled: true
+nexus_docker_group_name: "docker-group"
+nexus_docker_group_http_port: null
+nexus_docker_group_https_port: null
+nexus_docker_group_members:
+  - "{{ nexus_docker_repo_name }}"
+  - "{{ nexus_docker_proxy_name }}"
+
+# Docker users
+nexus_docker_readonly_user: "docker-reader"
+nexus_docker_readonly_password: ""  # Auto-generated if empty
+nexus_docker_writer_user: "docker-writer"
+nexus_docker_writer_password: ""  # Auto-generated if empty
+
+# Artifacts directory
+artifacts_dir: "/artifacts"
+nexus_export_credentials: true
+
+# Service settings
+nexus_service_enabled: true
+nexus_service_state: started
+
+# Dependencies
+nexus_dependencies:
+  - "{{ nexus_java_package }}"
+  - curl
+  - net-tools
+  - tar
+
+# API configuration
+nexus_api_timeout: 300
+nexus_api_retries: 60
+nexus_api_delay: 5
