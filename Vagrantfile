@@ -22,8 +22,8 @@ Vagrant.configure("2") do |config|
       vb.cpus = 1
       vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
     end
-    haproxy.vm.synced_folder "./scripts", "/scripts"
-    haproxy.vm.synced_folder "./artifacts", "/artifacts"
+    haproxy.vm.synced_folder "./scripts", "/scripts", automount: true
+    haproxy.vm.synced_folder "./artifacts", "/artifacts", automount: true
     haproxy.vm.provision "shell", inline: <<-SHELL
       sudo /scripts/setup-dns-server.sh
       sudo /scripts/setup-dns-client.sh
@@ -46,8 +46,8 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
-    gitea.vm.synced_folder "./scripts", "/scripts"
-    gitea.vm.synced_folder "./artifacts", "/artifacts"
+    gitea.vm.synced_folder "./scripts", "/scripts", automount: true
+    gitea.vm.synced_folder "./artifacts", "/artifacts", automount: true
     gitea.vm.provision "shell", inline: <<-SHELL
       sudo /scripts/setup-dns-client.sh
       sudo /scripts/setup-gitea.sh
@@ -67,8 +67,8 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
-    nexus.vm.synced_folder "./scripts", "/scripts"
-    nexus.vm.synced_folder "./artifacts", "/artifacts"
+    nexus.vm.synced_folder "./scripts", "/scripts", automount: true
+    nexus.vm.synced_folder "./artifacts", "/artifacts", automount: true
     nexus.vm.provision "shell", inline: <<-SHELL
       sudo /scripts/setup-dns-client.sh
       sudo /scripts/setup-nexus.sh
@@ -87,8 +87,8 @@ Vagrant.configure("2") do |config|
       vb.memory = 2048
       vb.cpus = 2
     end
-    runner.vm.synced_folder "./scripts", "/scripts"
-    runner.vm.synced_folder "./artifacts", "/artifacts"
+    runner.vm.synced_folder "./scripts", "/scripts", automount: true
+    runner.vm.synced_folder "./artifacts", "/artifacts", automount: true
     runner.vm.provision "shell", inline: <<-SHELL
       sudo /scripts/setup-dns-client.sh
       sudo /scripts/setup-gitea-runner.sh
@@ -106,8 +106,8 @@ Vagrant.configure("2") do |config|
       vb.memory = 10240
       vb.cpus = 4
     end
-    kube.vm.synced_folder "./scripts", "/scripts"
-    kube.vm.synced_folder "./artifacts", "/artifacts"
+    kube.vm.synced_folder "./scripts", "/scripts", automount: true
+    kube.vm.synced_folder "./artifacts", "/artifacts", automount: true
     kube.vm.provision "shell", inline: <<-SHELL
       sudo /scripts/setup-dns-client.sh
       sudo /scripts/setup-asdf.sh
