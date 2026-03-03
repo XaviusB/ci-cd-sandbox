@@ -199,17 +199,12 @@ Download and install:
   * [Kubectl](https://dl.k8s.io/release/v1.35.0/bin/windows/amd64/kubectl.exe) and save in any `$env:Path` folder
   * [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - Required for automated provisioning
 
-**Installing Ansible:**
-```bash
-# Ubuntu/Debian
-sudo apt-get update && sudo apt-get install -y ansible
+**Installing VGuest plugin
 
-# macOS
-brew install ansible
-
-# Windows (via WSL2)
-# Install WSL2 first, then install Ansible inside Ubuntu/Debian WSL
 ```
+vagrant plugin install vagrant-vbguest
+```
+
 
 Optional but recommended:
 ```powershell

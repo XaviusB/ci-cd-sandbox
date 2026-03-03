@@ -1,5 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "Ringworld/UbuntuServer"
+  config.vbguest.auto_update = true
 
   # Common provider settings
   config.vm.provider "virtualbox" do |vb|
