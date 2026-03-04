@@ -216,6 +216,9 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de
 
 * [ ] Ajouter une étape de scan de vulnérabilités dans votre pipeline CI/CD après le _build_ et avant le _push_ en utilisant Trivy avant de pousser votre image Docker vers le registre de conteneurs.
 
+| Conseil: vous pouvez utiliser `docker save` pour sauvegarder votre image Docker et ensuite utiliser Trivy pour scanner l'image sauvegardée sans avoir besoin de la pousser vers le registre de conteneurs.
+
+
 > SecOps
 
 [bullet]
