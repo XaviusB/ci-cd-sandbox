@@ -205,8 +205,8 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de
 > Semantic versioning
 
 [bullet]
-  * Soit il s'agit d'une pull-request, dans ce cas on tag l'image |pr-<numéro_de_pr>-<sha1_du_commit>|
-  * Soit il s'agit d'un tag gitlab, dans ce cas on tag l'image |<version-du-tag>-<sha1_du_commit>|
+  * Soit il s'agit d'une pull-request, dans ce cas on tag l'image `pr-<numéro_de_pr>-<sha1_du_commit>`
+  * Soit il s'agit d'un tag gitlab, dans ce cas on tag l'image `v<version-du-tag>-<sha1_du_commit>` (le `v` qui précède est une très bonne pratique)
 
 * [ ] Ajouter une étape de push d'image Docker en respectant le _semantic versioning_
 
@@ -214,14 +214,14 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de
 
 === Scan de vulnérabilités
 
-* [ ] Ajouter une étape de scan de vulnérabilités dans votre pipeline CI/CD en utilisant Trivy avant de pousser votre image Docker vers le registre de conteneurs.
+* [ ] Ajouter une étape de scan de vulnérabilités dans votre pipeline CI/CD après le _build_ et avant le _push_ en utilisant Trivy avant de pousser votre image Docker vers le registre de conteneurs.
 
 > SecOps
 
 [bullet]
   * Si des vulnérabilités sont détectées, le pipeline doit échouer et afficher les détails des vulnérabilités trouvées.
   * Si aucune vulnérabilité n'est détectée, l'image Docker doit être poussée vers le registre de conteneurs.
-  * Il faut corriger les vulnérabilités détectées dans votre image Docker en mettant à jour votre `Dockerfile` ou en utilisant des versions plus récentes des dépendances ou en .trivyignore les vulnérabilités qui ne sont pas exploitables/_fixables
+  * Il faut corriger les vulnérabilités détectées dans votre image Docker en mettant à jour votre `Dockerfile` ou en utilisant des versions plus récentes des dépendances ou en .trivyignore les vulnérabilités qui ne sont pas exploitables/_fixables_
 
 == Préparation du déploiement
 
