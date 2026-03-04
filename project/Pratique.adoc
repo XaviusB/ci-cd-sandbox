@@ -83,7 +83,7 @@ Werkzeug==3.1.3
 
 === Rendre l'application "plantable"
 
-* [ ] Créer une nouvelle _route_ `/break` dans `main.py` qui simule une erreur de serveur en retournant un code d'état HTTP 500 :
+* [ ] Créer une nouvelle _route_ `/break` dans `main.py` qui simule une erreur de serveur en retournant un code d'état HTTP 500 depuis le _endpoint_ `/healthz`
 
 == Fiabiliser l'application
 
@@ -114,8 +114,6 @@ Vous devriez avoir les fichiers suivants dans votre projet :
 main.py
 requirements.txt
 requirements-dev.txt
-test_main.py
-
 ```
 == Créer un pipeline CI/CD
 
@@ -128,6 +126,16 @@ test_main.py
 === Tests unitaires
 
 * [ ] Ajouter une étape de tests unitaires dans votre pipeline CI/CD pour exécuter `pytest` et s'assurer que tous les tests passent correctement.
+
+Vous devriez avoir les fichiers suivants dans votre projet :
+
+```
+.gitignore
+main.py
+requirements.txt
+requirements-dev.txt
+test_main.py
+```
 
 == Création d'une image Docker
 
@@ -166,30 +174,30 @@ docker image ls
 
 > FinOps
 
-- [ ] Trouver des moyens de réduire la taille de votre image Docker pour optimiser les coûts de stockage et de déploiement. L'image doit faire moins de 100Mo. Curl doit demeurer sur l'image pour les tests de santé.
+* [ ] Trouver des moyens de réduire la taille de votre image Docker pour optimiser les coûts de stockage et de déploiement. L'image doit faire moins de 100Mo. Curl doit demeurer sur l'image pour les tests de santé.
 
 * [ ] Configurer le cache de pip dans votre pipeline CI/CD pour accélérer l'installation des dépendances en réutilisant les paquets déjà téléchargés.
 
 > Secops
 
-- [ ] Trouver un moyen pour le code puisse être executé mais pas être modifié à l'intéreur de l'image
+* [ ] Trouver un moyen pour le code puisse être executé mais pas être modifié à l'intéreur de l'image
 
 === Build d'image Docker
 
 * [ ] Dans gitlab.com créer un token `Settings > Repository > Deploy Tokens` avec les permissions `read_registry` et `write_registry` pour pouvoir pousser votre image Docker vers le registre de conteneurs de GitLab.
 
-> Ne perdez pas ce token
+> Ne perdez pas ce token et ne pas le _commit_ dans votre code.
 
 * [ ] Ajouter les variables d'environnement `CI_REGISTRY_USER` et `CI_REGISTRY_PASSWORD` dans les paramètres de votre projet GitLab `Settings > CI / CD > Variables` pour stocker les informations d'identification nécessaires à l'authentification avec le registre de conteneurs.
 
 * [ ] Identifier le nom de votre image Docker grâce au menu `Deploy > Container Registry` de votre projet GitLab. Le nom de l'image devrait être quelque chose comme `registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>`.
 
-* [ ] Tenter de build et de push l'image depuis votre poste
+* [ ] Tenter de _build_ et de _push_ l'image depuis votre poste
 
 ```sh
 docker login registry.gitlab.com
-docker build -t registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>:latest .
-docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom
+docker build -t registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>:test .
+docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>:test
 ```
 
 * [ ] Ajouter une étape de build d'image Docker dans votre pipeline CI/CD pour construire une image de votre application à partir du `Dockerfile` que vous avez créé.
@@ -197,8 +205,8 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom
 > Semantic versioning
 
 [bullet]
-  * Soit il s'agit d'une pull-request, dans ce cas on tag |pr-<numéro_de_pr>-<sha1_du_commit>|
-  * Soit il s'agit d'un tag gitlab, dans ce cas on tag |<version-du-tag>-<sha1_du_commit>|
+  * Soit il s'agit d'une pull-request, dans ce cas on tag l'image |pr-<numéro_de_pr>-<sha1_du_commit>|
+  * Soit il s'agit d'un tag gitlab, dans ce cas on tag l'image |<version-du-tag>-<sha1_du_commit>|
 
 * [ ] Ajouter une étape de push d'image Docker en respectant le _semantic versioning_
 
@@ -213,6 +221,7 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom
 [bullet]
   * Si des vulnérabilités sont détectées, le pipeline doit échouer et afficher les détails des vulnérabilités trouvées.
   * Si aucune vulnérabilité n'est détectée, l'image Docker doit être poussée vers le registre de conteneurs.
+  * Il faut corriger les vulnérabilités détectées dans votre image Docker en mettant à jour votre `Dockerfile` ou en utilisant des versions plus récentes des dépendances ou en .trivyignore les vulnérabilités qui ne sont pas exploitables/_fixables
 
 == Préparation du déploiement
 
@@ -225,6 +234,11 @@ docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom
 
 ```sh
 minikube start
+```
+
+* [ ] On installera le gestionnaire d'ingress NGINX pour pouvoir exposer notre application Flask via un ingress Kubernetes.
+
+```sh
 minikube addons enable ingress
 ```
 
@@ -237,14 +251,16 @@ kubectl get pods -n ingress-nginx
 * [ ] Créer les entrées suivantes dans votre fichier hosts avec l'IP retournée par `minikube ip`
 
 ```
-192.168.49.2 app-dev.devops.active
-192.168.49.2 app.devops.active
-192.168.49.2 argocd.devops.active
+192.168.XX.XX app-dev.devops.active
+192.168.XX.XX app.devops.active
+192.168.XX.XX argocd.devops.active
 ```
 
 * [ ] Créer trois manifestes Kubernetes dans une nouveau dossier qui sera bientôt un nouveau repo git, en prenant soin de remplacer les valeurs `FIXME` par les valeurs appropriées pour votre projet :
 
 `deployment.yml`: ce manifeste crée une ressource de déploiement Kubernetes qui définit comment votre application Flask doit être déployée sur le cluster Minikube. Assurez-vous de remplacer `FIXME:FIXME` par le nom de votre image Docker dans la section `image` et `FIXME.py` par le nom de votre fichier Python principal (dans ce cas, `main.py`).
+
+La variable d'environnement `PYTHONUNBUFFERED` est définie pour s'assurer que les logs de votre application sont affichés en temps réel dans les journaux Kubernetes, ce qui facilite le débogage et la surveillance de votre application.
 
 ```yml
 ---
@@ -344,7 +360,7 @@ kubectl create secret docker-registry gitlab-registry-secret \
   -n my-app-dev
 ```
 
-* [ ] Appliquer les manifest Kubernetes pour déployer votre application sur le cluster Minikube
+* [ ] Appliquer les _manifests_ Kubernetes pour déployer votre application sur le cluster Minikube
 
 ```sh
 kubectl apply -f deployment.yml -f service.yml -f ingress.yml -n my-app-dev
@@ -393,13 +409,20 @@ ssh-key -t rsa -b 4096 -C "<email_de_l'étudiant>" -f deploy-key/deploy
 kubectl create namespace argocd
 kubectl apply -n argocd --server-side --force-conflicts -f https://github.com/argoproj/argo-cd/raw/refs/heads/master/manifests/install.yaml
 ```
+
+* [ ] Attendre que l'application ArgoCD soit complètement déployée avant de continuer
+
+```sh
+watch kubectl get pod -n argocd
+```
+
 Récupérer le mot de passe initial pour se connecter à l'interface web d'ArgoCD
 ```sh
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
 > Attention, le signe `%` à la fin de la ligne signifie qu'il n'y a pas de retour à la ligne. Ne pas l'inclure dans le mot de passe
 
-* [ ] Créer un port-forward pour accéder à l'interface web d'ArgoCD
+* [ ] Créer un port-forward pour accéder à l'interface web d'ArgoCD link:https://127.0.0.1:8080
 
 ```sh
 kubectl port-forward svc/argocd-server -n argocd 8080:80
@@ -432,6 +455,7 @@ Puis nous devons désactiver la redirection HTTP vers HTTPS dans les paramètres
 
 ```sh
 kubectl patch cm argocd-cmd-params-cm -n argocd --type merge -p '{"data": {"server.insecure": "true"}}'
+# On doit ensuite redémarrer le pod argocd-server pour que les changements soient pris en compte
 kubectl delete pod -l app.kubernetes.io/name=argocd-server -n argocd
 ```
 
@@ -460,6 +484,7 @@ Pour la prod `overlays/prod/kustomization.yaml`:
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: my-app-prod
 resources:
   - ../../base/deployment.yml
   - ../../base/service.yml
@@ -483,6 +508,7 @@ Pour la dev `overlays/dev/kustomization.yaml`:
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: my-app-dev
 resources:
   - ../../base/deployment.yml
   - ../../base/service.yml
@@ -493,7 +519,22 @@ images:
     newTag: FIXME
 ```
 
+
 * [ ] Déplacer vos manifestes Kubernetes dans le dossier `base` et créer des fichiers `kustomization.yaml` dans chaque dossier d'environnement pour définir les personnalisations spécifiques à chaque environnement.
+
+La structure de votre projet devrait ressembler à ceci :
+```
+/
+├── base/
+│   ├── deployment.yml
+│   ├── service.yml
+│   └── ingress.yml
+└── overlays/
+    ├── dev/
+    │   └── kustomization.yaml
+    └── prod/
+        └── kustomization.yaml
+```
 
 * [ ] Commit & Push vos changements vers votre dépôt GitLab.
 
@@ -509,56 +550,6 @@ images:
   * Déployer automatiquement votre application sur l'environnement de développement à chaque fois que vous poussez des changements dans une pull-request
   * Déployer automatiquement votre application sur l'environnement de production à chaque fois que vous créez un tag GitLab.
 
+> Pour mettre à jour les fichiers yaml, vous *devez* utiliser yq, un outil de manipulation de fichiers yaml en ligne de commande:
+
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
-
-
-
-== Exercices et barèmes
-
-[%header%footer,cols="1,2,4,1"]
-|===
-|# | Objectifs | Barème | Total
-
-|Exercice 1
-|Créer un image de _container_ en utilisant Kaniko
-a| * 2 points pour l'utilisation du cache Nexus
- * 4 points si les paquets de l'image sont mis à jour durant le build
- * 4 points si les permissions de l'image ne permettent pas la modification du code
-a| **10**
-
-|Exercice 2
-|Mettre en place la CI
-a| * 5 points si les vulnérabilités sont scannées (.trivyignore accepté)
- * 1 point pour le linting
- * 2 points si la CI s'arrête en cas de non conformité
- * 3 points si la CI commente la Merge Request
-a| **10**
-
-|Exercice 3
-|Push de l'image sur Nexus
-a| * 3 points si aucun secret n'est apparent dans aucun fichier
- * 3 points si le tag de l'image correspond au tag de la CI
- * 2 points si la CI commente la _Merge Request_ en cas de problème
- * 2 points si la _Merge Request_ ne peu pas être _merged_ en cas de problème
-a| **10**
-
-|Exercice 4
-|Mise en place de la CD
-a| * 3 points si l'environnement de dev est mis à jour automatiquement à chaque _commmit_ d'une _Merge Request_
- * 2 points si l'environnement de production est mis à jour à la création d'un _tag_ GitLab
- * 5 points pour la mise en place de link:https://fluxcd.io/[fluxcd] pointant vers le _repository_ des manifestes Kubernetes
-a| **10**
-
-|Exercice 5
-|Bonnes pratiques
-a| * 2 points si l'élève n'utilise que des images du proxy Docker.io de Nexus (voir mise en place)
- * 2 points si les scripts bash utilisés sont validés par shellcheck (link:https://www.shellcheck.net/wiki/Ignore[shellcheck disable]` accepté mais ne pas abuser)
- * 3 points pour la documentation technique
- * 3 points pour la propreté et clareté globale
-a| **10**
-
-|Total
-|
-|
-a| **50**
-|===
