@@ -542,7 +542,6 @@ images:
     newTag: FIXME
 ```
 
-
 * [ ] Déplacer vos manifestes Kubernetes dans le dossier `base` et créer des fichiers `kustomization.yaml` dans chaque dossier d'environnement pour définir les personnalisations spécifiques à chaque environnement.
 
 La structure de votre projet devrait ressembler à ceci :
@@ -575,11 +574,20 @@ La structure de votre projet devrait ressembler à ceci :
 
 > Pour mettre à jour les fichiers yaml, vous *devez* utiliser yq, un outil de manipulation de fichiers yaml en ligne de commande:
 
+> Pour que votre CI depuis le projet de votre application puisse accéder au projet de déploiement Kubernetes, vous devez ajouter une nouvelle clé privée SSH dans les variables CI/CD de votre projet GitLab et sa clé publique dans les clés SSH dans le repo de déploiement Kubernetes.
+
+Pour que git sache quelle clé utiliser pour accéder au repo de déploiement Kubernetes, vous pouvez utiliser la variable d'environnement `GIT_SSH_COMMAND`
+
+`export GIT_SSH_COMMAND='ssh -i /chemin/vers/ma/cle-privee -o IdentitiesOnly=yes'`
+
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
 
 == Rendus Attendus
 
-Merci d'envoyer les fichiers suivants à votre formateur link:mailto:xavier.bourdeau@hesisas.fr
+Merci d'envoyer les fichiers suivants à votre formateur link:mailto:xavier.bourdeau@hesisas.fr. Deux choix
+
+[bullet]
+  * Donner accès à votre project GitLab contenant votre code d'application et vos manifestes Kubernetes à
 
  * Fichier Zip contenant votre projet gitlab
  * Fichier Zip content votre projet k8s
