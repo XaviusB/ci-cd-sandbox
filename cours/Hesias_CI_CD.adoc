@@ -1,0 +1,2818 @@
+= CI/CD
+:sectnums:
+:sectanchors:
+:sectlinks:
+:data-uri:
+:appendix-caption: Exhibit
+:toc: right
+:toc-title: Sommaire
+:author: Xavier BOURDEAU
+:email: xavier.bourdeau@hesias.fr
+:sectlinks:
+:favicon: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAESElEQVR4nO1ZW2skVRA+u+562VXBrJuuMxn1RUV8UfDCPnjHP6Cuq7Ksig9i1EdFRNgRBBVB8LImdFVHScTLBtH1BvoXNCi6ETEKmaqeJK5xQdF4jWmpmZ6xZ+YkM+npnWRkPpiXM/Q59XVdTtXXxvTRRx+ZIIelCyHgyxvXLfExIF60KF9Z4reA+LFBDPeYyegks5kAxN9Ykr9gbH53ct2SRK4foMwBydO5l0vndN3YgVdnzvRQHsiTDNQIoHyshuV8ub0dAgkif1qUkdx4aVfXCIAv98cGHK6ueSgPVwzisfUQsFUixIse8r6uEMiPypBF/rV8sC/X6trQWHhJ/EY/qyfAX1rklXaJWOKXTCHalqnB570ye6qHfHfSzUBysHwgyqe1NeT7PCze0Pj8+c/PnGL92Yssyk2WZNyS/NSCyPv5Z+W0zAio8RVj+ag38t2grukBgPytJZlN80JygdxjSebXyI33MvOEvnk1vpGE9ed2eBMLO9Puu/vQsdO1Eq0WYkD8gskKanSVBCBTZhsbDb3iXiD+ze2J4t7UpdKSPJis00oCiNGj8DqTMQYx3FMtDHU/lO+T5bptAPFw7MYlQClouGRtdCMg4Ftd4QQkz5n14twRPgtQ3qxuqAmryWdOMCzxM46E/l1Ld7oNka+2xJ9otcm0tK0Cb2Jhp0VZcNwPj5teAcTh21CR2ETRFtMLuHhy+mTXZZfD0qWmVwDIrzV5IZCH2nu6EG1NVboyhIe8zxFGr7flPiA5or29RdlvNib+fe10HeV0Mf7Pt8SHmkp7wvj4EuFlCIoHuknAouzXc1u333KkbqprMn4DSeSIb7PEf69KAPlD7XDrjUd+Z40HNg8JbDBe3QAk77YcNJCXG8fFrpPARuPjllanoGpyAPLx5quc34gT517TZUBQPKAkgPhtjZSWD7iyXycps4HIa0lv9xa2yI84Qmjc9Aos8WWOEDpu/KntpicQRVuAOHR0g12P/9SwxE84wmi+k/m37bP9uR3aeVqSKQjkmlSbDGGYB5I/HIPFU+YEI69qB/FM4tzD6UZK5Bcdd8EK+OEtpisk5GBNPCMeTiul/ODIhV88kiuzNtoLwuuBOKhKNtVIUA12V7B4Rgc3oVOvWcraE4BM8f7TSRIdQ5XjVVqLFRWl9CbvaP71Ky2xyvI18YxkOju12p/ablE+WKNPmleZcN2KhZZrZCnLkw4SQHxXpkmljdTazZ78bFEmgMKbVchtaro0JH2+MZmQtqJ2aHUr1M4iGQDkO7OXcArRNksy2rJr/S/Z/wHkL5JbAPHn+p9K8WUCPl9VCUVe6tqXGm2pAfnHtkggL9cRQB5rHM5BxbO0pTItrD93tnqj/HloHQQsyh2xsR/VKYDEw6lLZSdQtwPKk0BcassDmqT6IZDka7OpUIi2gi9XWOJHLcqklkG9BPVLpKvbHRoNL9gYQ/vo4/+HfwF3ye8YE/5wMwAAAABJRU5ErkJggg==
+:CopyToClipboardDocinfoProcessor:
+
+== Introduction
+
+[verse,Jez Humble, Wikipedia]
+"Continuous delivery is about making sure that you can release your software at any time"
+
+[verse,David Farley,Continuous Delivery: Reliable Software Releases through Build]
+“There should be two tasks for a human being to perform to deploy software into a development, test, or production environment: to pick the version and environment and to press the “deploy” button.”
+
+== Qu'est ce qu'un _build_ ?
+
+La définition d'un _build_: compilation et assemblage d'un code source en langage machine directement exécutable par un ordinateur.
+
+Aujourd'hui la notion est plus complexe et dépend essentiellement du langage et du contexte utilisé.
+On pourrait dire désormais qu'un _build_ est le processus dont le but est de créer un artefact utilisable ou installable:
+
+ * image de conteneur
+ * appImage
+ * packages: .rpm .deb setup.exe
+ * snap packages
+ * executable .exe
+
+=== C++
+
+[ditaa, target="build-cpp"]
+....
+
+    .cpp -------+
+                |
+                v
+  +-------------+---------------+
+  |     Preprocessing           |   gcc -E
+  +-------------------------+---+
+                            |
+#include #define Macro--+   |
+                        |   |
+                        v   v
+  +-------------------------+---+
+  |     Compilation             |   gcc -c
+  +-----------+-----------------+
+              |
+              |
+              |   Assembly code (.s)
+              |
+              v
+  +-----------------------------+
+  |     Assemble                |   as
+  +-----------------------------+
+              |
+              |
+              |   Machine code (.o)
+              |
+              v
+  +-----------------------------+
+  |     Linking                 |   ld
+  +-----------------------------+
+              |
+              |
+              |   Static lib (.lib)
+              |
+              v
+  +-----------------------------+
+  |     executable              |
+  +-----------------------------+
+....
+
+=== Python
+
+[ditaa, target="build-py"]
+....
+
+ .py ------+
+           |
+           v
++-----------------------+
+|     Compilation       |  (Bytecode .pyc)
++----------+------------+
+           |
+           v
++-----------------------+
+|    Interpretation     |
++----------+------------+
+           |
+           v
++------------------------+      +---------------------+
+|     Virtual Machine    |<-----+   Module Libraries  |
++------------------------+      +---------------------+
+           |
+           v
++------------------------+
+|     execution          |
++------------------------+
+....
+
+=== Java
+
+[ditaa, target="build-java"]
+....
+
+  .java ---+
+           |
+           v
++-----------------------+
+|                       |
+|      Compilation      | Bytecode (.class) javac
+|                       |
++-----------------------+
+           |
+           v
++-----------------------+
+|                       |
+|    Virtual Machine    | java ou javaw
+|                       |
++-----------------------+
+           |
+           v
++------------------------+
+|     execution          |
++------------------------+
+....
+
+== Création d'un _build_ de code source via GitlabCI
+
+Le fichier de configuration de la CI/CD se nomme par défaut `.gitlab-ci.yml`
+
+```yaml
+---
+stages:
+  - lint
+  - build
+  - test
+  - push
+
+lint:
+  stage: lint
+  image: debian:latest
+  before_script:
+    - apt-get update && apt-get install -y shellcheck yamllint
+  script:
+    - yamllint --config-file .yamllint-config.yml .
+    - find . -name "*.sh" -exec shellcheck {} \;
+    - npm lint
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+  variables:
+  script:
+    - docker build
+
+test:
+  stage: test
+  image:
+    name: node:20
+    entrypoint: [""]
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+  variables:
+  script:
+    - npm test
+
+push:
+  stage: push
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_TAG
+  variables:
+    VAR_CDRUNNER_PASSWORD: $CDRUNNER_PASSWORD
+    VAR_CDRUNNER_LOGIN: $CDRUNNER_LOGIN
+    AWS_ACCESS_KEY_ID: $CACHE_ACCESSKEY
+    AWS_SECRET_ACCESS_KEY: $CACHE_SECRETKEY
+    S3_ENDPOINT: https://s3.mysite.com
+    S3_FORCE_PATH_STYLE: 'true'
+  script:
+    - docker push
+
+```
+
+Source: link:https://docs.gitlab.com/ci/yaml/[]
+
+
+
+== Comprendre les méthodes de transfert
+
+=== Les protocoles
+
+TCP/IP, IPX/SPX (obsolète) et UDP sont des protocoles fondamentaux dans les réseaux, chacun remplissant des rôles distincts dans les systèmes de communication.
+
+==== TCP/IP (Transmission Control Protocol/Internet Protocol)
+
+Développé par le ministère américain de la Défense dans les années 1970 dans le cadre d'un projet visant à créer un cadre de réseau
+robuste et évolutif. TCP fournit une communication fiable et orientée connexion avec correction des erreurs et retransmission des données,
+tandis qu'IP gère l'adressage et le routage des paquets sur les réseaux. Les principaux avantages de TCP/IP incluent sa flexibilité,
+son évolutivité et sa capacité à connecter plusieurs réseaux divers ; cependant, sa complexité et sa surcharge peuvent entraîner une
+réduction des performances dans certains scénarios.
+
+Afin d'encapsuler un paquet IP dans une trame, l'hôte d'origine a besoin de connaître l'adresse physique (MAC) de la destination. Une
+table de correspondance permet de lier les adresses IP à leur adresse physique:
+  * IPv4: le protocole ARP (Address Resolution Protocol) remplit cette fonction. La table de correspondance est appelée "cache ARP"
+  * IPv6, le protocole ND (Neighbor Discovery), sous-protocole ICMPv6, remplit cette fonction. Les hôtes IPv6 maintiennent la table de correspondance appelée "table de voisinage".
+
+Sous Windows et Linux
+
+```sh
+arp -a
+```
+
+Table de voisinage sous Linux
+
+```sh
+ip -6 neigh
+```
+
+Table de voisinage sous Windows
+
+```sh
+netsh interface ipv6 show neighbors
+```
+
+[ditaa, target="tcp-ip-ack"]
+....
+
+                TCP/IP
+
+/------------\   SYN      +---------------+
+|            | -------->  |               |
+|            |  SYN ACK   |               |
+| TCP Client | <--------  |    Server     |
+|            |   ACK      |               |
+|            | -------->  |               |
+\------------/            +---------------+
+
+....
+
+==== IPX/SPX (Internetwork Packet Exchange/Sequenced Packet Exchange)
+
+Développé par Novell au début des années 1980 pour prendre en charge son système d'exploitation NetWare.
+IPX est utilisé pour l'adressage, tandis que SPX fournit une communication orientée connexion.
+IPX/SPX a été largement adopté dans les réseaux locaux (LAN), en particulier ceux exécutant Novell NetWare, bénéficiant de sa simplicité
+et de sa facilité d'utilisation ; cependant, il lui manque l'évolutivité et la prise en charge Internet généralisée dont bénéficie TCP/IP,
+ce qui a conduit à son déclin à mesure que TCP/IP est devenu la suite de protocoles dominants.
+
+==== UDP (User Datagram Protocol),
+
+Egalement partie de la suite TCP/IP, a été introduit aux côtés de TCP dans les années 1970. Contrairement à TCP,
+UDP est un protocole sans connexion qui offre un moyen léger d'envoyer des messages sans avoir à établir une connexion fiable
+ou à assurer la livraison. Cela rend UDP adapté aux applications nécessitant vitesse et efficacité, telles que les services de streaming
+et les jeux en ligne, mais il sacrifie la fiabilité et l'intégrité des données, le rendant moins adapté aux applications où la garantie
+de livraison est essentielle.
+
+
+[ditaa, target="udp-request-response"]
+....
+
+                  UDP
+
+/------------\  Request   +---------------+
+|            | -------->  |               |
+|            |            |               |
+| TCP Client | <--------  |    Server     |
+|            |  Response  |               |
+|            | <--------  |               |
+\------------/  Response  +---------------+
+
+....
+
+
+=== FTP (File Transfer Protocol)
+
+Le protocol FTP permet le transfert de fichiers. Il a été créé en 1971 et est décrit dans sa dernière version (1973) dans la https://www.ietf.org/rfc/rfc959.txt[RFC 959]
+Le serveur et le client ont chacun deux processus distincts qui communiquent entre eux.
+
+le DTP (Data Transfer Process) gère l'établissement de la connexion et le canal de flux de données.
+le PI (Protocol Interpreter) est l'interpréteur des commandes reçues par le canal de contrôle. C'est lui qui commande DTP.
+
+Le PI communique avec le serveur PI par le protocole TELNET. Il n'est donc pas chiffré. Il bénéficie de la somme de contrôles du protocole TCP qui est reconnu comme un protocole fiable.
+Un version securisée existe, le FTPS. La connexion est établie en combinant avec Secure Sockets Layer (SSL) ou Transport Layer Security (TLS). (ne pas confondre avec le SFTP)
+
+La connexion FTP à deux modes bien distincts:
+
+  * Actif:  le client et le serveur DTP peuvent communiquer directement, les ports sont ouverts et accessibles des deux côtés.
+  * Passif: Le client DTP est derrière un NAT, le serveur ne peut donc pas directement communiquer avec le client. Le serveur annonce un port par lequel le client peut établir le canal de données.
+
+[ditaa, target="ftp-simple"]
+....
+
+
+    Client                                Server
++------------+                        +------------+
+|            |                        |            |
+|   GUI      |                        |   Loggin   |
+|            |                        |            |
++------------+                        +------------+
+|            |    Commands            |            |
+|            +----------------------->+            |
+| Client PI  +<-----------------------+ Server PI  |
+|            |    Replies             |            |
++------------+                        +------------+
+|            |                        |            |
+| User DTP   +<---------------------->+ Server DTP |
+|            |    Data stream         |            |
++------------+                        +------------+
+
+....
+
+Il est à noter que la séparation du DTP et PI permet de faire ce que l'on appelle du "cross ftp".
+
+[ditaa, target="cross-ftp"]
+....
+
+
+                       Client
+                   +------------+
+                   |            |
+                   |   GUI      |
+                   |            |
+                   +------------+
+                   |            |
+                /--+ Client PI  +--\
+                |  |            |  |
+                |  +------------+  |
+                |  |            |  |
+                |  | User DTP   |  |
+                |  |            |  |
+                |  +------------+  |
+                |                  |
+    Server      |                  |      Server
++------------+  |    Commands      |  +------------+
+|            |  |    Replies       |  |            |
+|   Loggin   |  |                  |  |   Loggin   |
+|            |  |                  |  |            |
++------------+  |                  |  +------------+
+|            |  |                  |  |            |
++            +<-/                  \->+            |
++ Server PI  |                        + Server PI  |
+|            |                        |            |
++------------+                        +------------+
+|            |                        |            |
++ Server DTP +<---------------------->+ Server DTP |
+|            |     Data streams       |            |
++------------+                        +------------+
+....
+
+=== Partage de fichiers
+
+
+==== SMB (Server Message Block)
+
+Protocol inventé par IBM en 1983. Il permet aux ordinateurs de lire et d'écrire des fichiers sur un hôte via un réseau local (LAN).
+Les répertoires situés sur les hôtes distants et mis à disposition grâce au protocole SMB sont nommés "partages".
+
+==== Samba
+
+Mise en oeuvre du protocole SMB pour les machines UNIX, il a été inventé par Andrew Tridgell. La première mouture date de 1992.
+
+==== CIFS (Common Internet File System)
+
+Mise en œuvre particulière du protocole SMB créé par Microsoft
+
+==== DFS (Distributed File System)
+
+Le Distributed File System (DFS) de Microsoft est un service de gestion de fichiers. Il permet d'améliorer la disponibilité tout en gérant une réplication . DFS permet de créer une structure de fichiers unifiée et logique en reliant plusieurs partages de fichiers répartis sur différents serveurs. Cela offre une vue d'ensemble cohérente des données, indépendamment de leur emplacement physique.
+
+Le système est divisé en deux composants principaux :
+
+* DFS Namespace: permet aux administrateurs de grouper des partages de fichiers disparates sous un seul espace de noms logique
+* DFS Replication. assure la réplication des fichiers entre plusieurs serveurs dans un réseau, garantissant leur disponibilité et leur résilience en cas de défaillance d'un serveur.
+
+[ditaa,target="dfs"]
+....
++-----------+               +-----------+
+|           |  replication  |           |
+|  Server   |<------------->|  Server   |
+|   DFS1    |               |   DFS2    |
+|           |               |           |
++-----+-----+               +-----+-----+
+      |                           |
+      |                           |
+      v                           v
++---------------------------------------+
+|                DFS                    |
+|             Namespace                 |
+|          \\domain\shared              |
++---------------------------------------+
+                    ^
+                    |
+                    v
+              +-----+-----+
+              |           |
+              |  Client   |
+              |  Windows  |
+              |           |
+              +-----------+
+....
+
+Attention, la réplication DFS (Distributed File System Replication) de Microsoft est asynchrone et varira selon la configuration de l'intervalle de réplication,
+la bande passante du réseau, le volume de données à répliquer, la latence du réseau.
+
+DFSR utilise un algorithme basé sur le concept de "Dernière Modification Gagnante" (Last Writer Wins). Un dossier quarantaine pour les fichiers en conflits
+appelé "Dossier de Quarantaine (ConflictAndDeleted)" permet aux administrateur une éventuelle récupération.
+
+==== NFS (Networked File System):
+
+Développé par Sun Microsystems, sa première version date de 1992 et a été développé pour SunOS 1.0. Il est nativement sécurisé.
+
+Les deux protoles, SMB et NFS permettent la "pose" de vérous sur les fichiers et sont très bien sécurisés dans leurs dernières versions.
+NFS sera plus performant sur le transfert de fichiers, tandis que SMB permet le partage d'imprimante et peut fonctionner avec d'autres protocoles que le TCP/IP
+(IPX/SPX, NetBios, UDP) même si ces derniers sont désormais obsolètes.
+
+==== WebDav (Web Distributed Authoring and Versioning)
+
+WebDAV a été créé en 1996, principalement par un groupe de travail de l'Internet Engineering Task Force (IETF), comme une extension
+du protocole HTTP/HTTPS. Il permet la création de contenu Web à distance et sert de moyen de gérer des fichiers sur des serveurs Web.
+Il est relativement lent et son méchanisme de vérous n'est pas très fiable.
+
+==== SSH / SFTP
+
+SSH (Secure Shell) a été développé par Tatu Ylönen en 1995. Le protocole a été créé pour fournir une méthode sécurisée d'accès
+et de gestion des périphériques et systèmes réseau sur des réseaux non sécurisés, remplaçant les anciens protocoles comme Telnet et rlogin
+qui transmettaient des données, y compris des mots de passe, en texte clair.
+
+SSH utilise le cryptage pour garantir la confidentialité et l'intégrité des données échangées entre un client et un serveur,
+mais aussi beaucoup d'autres possibilités.
+
+SSH est utilisé par le CLI git.
+
+===== Accès à distance sécurisé
+
+SSH permet aux utilisateurs de se connecter en toute sécurité à des machines distantes, généralement des serveurs, pour exécuter des commandes, gérer des fichiers et faire fonctionner des applications.
+La connexion utilise un chiffrement fort pour protéger les données sensibles.
+
+===== Tunneling SSH (Transfert de ports)
+
+SSH peut créer des tunnels chiffrés pour transférer des ports de la machine locale vers le serveur distant et vice versa.
+Cette fonctionnalité est utile pour accéder en toute sécurité à des services qui ne peuvent pas être exposés directement sur Internet.
+
+Types de transfert de ports :
+
+* Transfert de port local : Le transfert de port local permet de transférer un port de votre machine locale vers un port sur un serveur distant.
+Par exemple, en transférant un port local (par exemple, 8080) vers un serveur de base de données distant (par exemple, le port 3306), vous pouvez vous connecter à cette base de données de manière sécurisée.
+
+```sh
+ssh -L [port_local]:[hôte_distant]:[port_distant] [utilisateur]@[serveur_distant]
+ssh -L 8080:localhost:80 utilisateur@serveur_distant
+```
+
+* Transfert de port distant : Cela permet de transférer un port depuis le serveur distant vers un port de votre machine locale. Cela permet d'accéder à des services locaux depuis le réseau du serveur distant.
+
+```sh
+ssh -R [port_distant]:[hôte_local]:[port_local] [utilisateur]@[serveur_distant]
+ssh -R 8080:another_host:3000 utilisateur@serveur_distant
+```
+
+* Transfert de port dynamique : Cela crée un proxy SOCKS qui permet de router dynamiquement des données à travers le tunnel SSH, offrant ainsi un accès à plusieurs services via une seule connexion.
+
+```sh
+ssh -D [port_local] [utilisateur]@[serveur_distant]
+ssh -D 1080 utilisateur@serveur_distant
+```
+
+===== Transfert de fichiers
+
+Bien qu'il soit principalement utilisé pour l'accès à distance, SSH offre également des capacités de transfert de fichiers sécurisées via SFTP (SSH File Transfer Protocol) et SCP (Secure Copy Protocol) ou encore rsync.
+Les deux méthodes exploitent le canal SSH chiffré pour un transfert de données sécurisé.
+
+```sh
+scp [serveur_distant]:/remote_folder/remote_file /folder/file
+scp /etc/hosts [serveur_distant]:/etc/hosts
+rsync -avSHP /var/opt/things/* [serveur_distant]:/var/opt/things/
+rsync -avSHP [serveur_distant]:/var/opt/things/* /var/opt/things/
+```
+
+===== Gestion des clés SSH
+
+SSH prend en charge un mécanisme d'authentification basé sur des clés robustes. Les utilisateurs peuvent générer des paires de clés SSH,
+composées d'une clé publique et d'une clé privée. La clé privée reste sur la machine locale, tandis que la clé publique est placée sur
+le serveur distant. Cette méthode renforce la sécurité en éliminant la nécessité d'envoyer des mots de passe sur le réseau.
+
+Création d'une clé privée et publique
+
+```sh
+ssh-key -t rsa 4096
+
+openssl genrsa -out id_rsa 4096
+openssl rsa -in id_rsa -pubout > mykey.pub
+
+
+ssh-keygen -o -a 256 -t ed25519 -C "$(hostname)-$(date +'%d-%m-%Y')"
+```
+
+===== Exécution de commandes à distance
+
+Les utilisateurs peuvent exécuter des commandes spécifiques directement sur un serveur distant sans avoir besoin de se connecter de
+manière interactive. Cela est utile pour les scripts d'automatisation, l'administration système et la planification des tâches.
+
+===== Transfert X11
+
+SSH peut transférer en toute sécurité des applications X11 (un système de fenêtres pour les affichages bitmap utilisé sur les systèmes
+Unix et Linux) depuis un serveur distant vers un affichage local. Cela permet aux utilisateurs d'exécuter des applications graphiques
+en toute sécurité via une connexion SSH.
+
+===== Multiplexage
+
+SSH prend en charge le multiplexage de session, permettant à plusieurs sessions SSH de partager une seule connexion réseau.
+Cela peut améliorer les performances et réduire l'utilisation des ressources lors de l'exécution de plusieurs commandes ou de
+la gestion de plusieurs connexions.
+
+===== Intégration avec d'autres outils
+
+SSH est intégré à divers outils de gestion de configuration, d'automatisation et d'orchestration comme Ansible, Puppet et Chef,
+permettant des déploiements et des configurations sécurisés sur plusieurs machines.
+
+== Automatiser son transfert de source
+
+=== docker / helm
+
+Exemple d'une création d'une image et de son transfert sur un "container registry"
+
+
+```Dockerfile
+# -----------------------------------------------------------------------------
+# ÉTAPE 1 : BUILD (Construction de l'application)
+# -----------------------------------------------------------------------------
+# Utilisation d'une image de base avec des outils de build
+# L'alias "builder" permet de référencer cette étape dans les étapes suivantes
+FROM node:20-alpine AS builder
+
+# Métadonnées de l'image (labels)
+# Ces informations sont utiles pour la documentation et la maintenance
+LABEL maintainer="votre.email@example.com"
+LABEL version="1.0.0"
+LABEL description="Application Node.js exemple avec multi-stage build"
+
+# Définition d'arguments de build
+# Ces arguments peuvent être passés lors du build avec --build-arg
+ARG NODE_ENV=production
+ARG APP_VERSION=1.0.0
+
+# Variables d'environnement globales
+# Ces variables seront disponibles dans tous les conteneurs créés depuis cette image
+ENV NODE_ENV=${NODE_ENV} \
+    APP_VERSION=${APP_VERSION} \
+    NPM_CONFIG_LOGLEVEL=warn \
+    # Répertoire de travail de l'application
+    APP_HOME=/usr/src/app
+
+# Définition du répertoire de travail
+# Tous les chemins relatifs suivants seront relatifs à ce répertoire
+WORKDIR ${APP_HOME}
+
+# Installation des dépendances système nécessaires
+# Le flag --no-cache permet de ne pas conserver le cache APK (image plus légère)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Copie des fichiers de dépendances en premier
+# Cette optimisation permet de profiter du cache Docker :
+# Si package.json n'a pas changé, Docker réutilisera cette couche
+COPY package.json package-lock.json ./
+
+# Installation des dépendances de production uniquement
+# --frozen-lockfile assure que les versions exactes sont installées
+RUN npm ci --only=production && \
+    # Nettoyage du cache npm pour réduire la taille de l'image
+    npm cache clean --force
+
+# Installation des dépendances de développement dans une couche séparée
+# Cela permet de les exclure de l'image finale
+RUN npm ci --only=development
+
+# Copie du code source de l'application
+# Le fichier .dockerignore permet d'exclure certains fichiers/dossiers
+COPY . .
+
+# Compilation/Build de l'application
+# Exemple : transpilation TypeScript, bundling, minification, etc.
+RUN npm run build && \
+    # Suppression des fichiers source après build (si nécessaire)
+    rm -rf src/ && \
+    # Suppression des devDependencies
+    npm prune --production
+
+# -----------------------------------------------------------------------------
+# ÉTAPE 2 : RUNTIME (Image finale légère pour l'exécution)
+# -----------------------------------------------------------------------------
+# On repart d'une image de base minimale
+# Seuls les fichiers nécessaires à l'exécution seront copiés depuis l'étape "builder"
+FROM node:20-alpine AS runtime
+
+# Réinstallation des labels pour l'image finale
+LABEL maintainer="votre.email@example.com"
+LABEL version="1.0.0"
+LABEL description="Application Node.js - Runtime optimisé"
+
+# Installation des dépendances runtime seulement (si nécessaire)
+# Exemple : librairies système requises par l'application
+RUN apk add --no-cache \
+    # Utilitaires pour le monitoring et le debugging
+    curl \
+    # Timezone data pour la gestion correcte des dates
+    tzdata && \
+    # Création d'un utilisateur non-root pour plus de sécurité
+    addgroup -g 1001 -S appuser && \
+    adduser -u 1001 -S appuser -G appuser
+
+# Variables d'environnement de l'application
+ENV NODE_ENV=production \
+    PORT=3000 \
+    # Timezone par défaut
+    TZ=Europe/Paris \
+    # Configuration de Node.js en production
+    NODE_OPTIONS="--max-old-space-size=512"
+
+# Définition du répertoire de travail
+WORKDIR /usr/src/app
+
+# Copie uniquement des fichiers nécessaires depuis l'étape de build
+# Cela permet de garder l'image finale la plus petite possible
+COPY --from=builder --chown=appuser:appuser /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appuser /usr/src/app/dist ./dist
+COPY --from=builder --chown=appuser:appuser /usr/src/app/package.json ./
+
+# Copie des fichiers de configuration (optionnel)
+COPY --chown=appuser:appuser config/ ./config/
+
+# Création de répertoires avec les bonnes permissions
+RUN mkdir -p /usr/src/app/logs /usr/src/app/tmp && \
+    chown -R appuser:appuser /usr/src/app
+
+# Déclaration d'un volume pour les données persistantes
+# Les données écrites dans ce répertoire seront persistées en dehors du conteneur
+VOLUME ["/usr/src/app/logs"]
+
+# Exposition du port sur lequel l'application écoute
+# Note : EXPOSE est uniquement documentatif, il faut mapper le port avec -p lors du run
+EXPOSE ${PORT}
+
+# Configuration du healthcheck
+# Docker vérifiera régulièrement si l'application est en bonne santé
+HEALTHCHECK --interval=30s \
+            --timeout=10s \
+            --start-period=40s \
+            --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Passage à l'utilisateur non-root
+# Important pour la sécurité : ne jamais exécuter une application en tant que root
+USER appuser
+
+# Commande par défaut à exécuter au démarrage du conteneur
+# CMD est au format exec (tableau JSON) qui est préférable au format shell
+CMD ["node", "dist/index.js"]
+```
+
+```sh
+docker build -t my.repo.com/folder/name:tag .
+docker push my.repo.com/folder/name:tag
+```
+
+Il possible de changer le _tag_ d'une image publique pour la stocker sur son _repository_.
+
+```sh
+docker pull ubuntu:focal
+docker tag ubuntu:focal my.repo.com/linux/ubuntu:focal
+docker push my.repo.com/linux/ubuntu:focal
+```
+
+A noter que Helm peut également stocker ses _charts_ sur des _repository_ de containeur.
+
+```sh
+helm push my-app-front my.repo.com/app/front:v1.2.3
+```
+
+[sidebar]
+.Alternatives à Docker
+--
+Il existe de nombreuses alternative à Docker
+
+ * Pour la création d'image: Podman, Buildah, Kaniko
+ * Pour l'exécution de conteneurs: CRI-O, Podman
+--
+
+
+=== git
+
+> Initialiser un nouveau _repo_:
+
+```sh
+echo "# cours" >> README.md
+git init --initial-branch master
+git add README.md
+git commit -m "first commit"
+git branch -M master
+git remote add origin \https://github.com/XaviusB/cours.git
+git push -u origin master
+```
+
+==== Init
+
+`git init --initial-branch master` : Initialisation du nouveau _repo_ ou réinitialisation d'un _repo_ existant.
+Le nom de la branche principale est `master`.
+C'etait le nom historique de la branche principale. Sur GitHub et GitLab la branche par défaut se nomme `main`.
+
+==== Add
+
+  * `git add README.md` : Ajoute un fichier ou un dossier à l'index de la branche existante.
+  * `git add .` : Ajoute tous les fichiers dans le dossier actuel et les sous-dossiers.
+  * `git add -A` : Ajoute à l'index tous les fichiers du _repo_, même dans les dossiers parents
+
+==== Commit
+
+`git commit -m "first commit"` : Crée un nouveau _commit_ contenant le contenu de l'index en cours.
+
+`git commit -a -m "first commit"` : Crée un nouveau _commit_ contenant l'index en cours et y ajoute tous les fichiers modifiés.
+ **Attention**, cela n'ajoute pas les nouveaux fichiers.
+
+==== Branch
+
+`git branch -M master` : Renomme une branche (équivalent de `--move --force`
+
+`git checkout -b my/branch` : Crée une branche locale
+
+`git branch -D my/branch` : Supprime une branche locale
+
+`git push origin --delete my/branch` : Supprime une branche distante
+
+==== _Remote_
+
+`git remote add origin \https://github.com/XaviusB/cours.git`: Ajoute au _repository_ distant la branche principale.
+
+> `origin` est une sténographie pour l'URL du _repo_
+
+`git push -u origin master` Pour chaque branche qui est à jour ou poussée avec succès, ajoutez une référence en amont (suivi)
+
+`git push origin HEAD`: Pousse à partir du dernier _commit_ sur le _repository_ distant
+
+`git push --set-upstream origin my/branch` : Référence la branche distante, plus besoin d'ajouter `origin HEAD` à la commande `git push`
+
+`git push --force-with-lease` : Permet de pousser en force sans écraser les _commit_ deja poussés par d'autres.
+
+> `HEAD` fait référence au dernier _commit_ sur la branche en cours.
+
+==== Autres possibilités
+
+`git log` : Liste des _commits_, du plus récent au plus ancien
+
+`git cherry-pick`: Permet d'appliquer un _commit_ sur une autre branche
+
+`git rev-parse --abbrev-ref HEAD`: Nom de branche actuelle
+
+`git fetch origin my/branch`: Télécharger la branche distante
+
+`git reset --hard origin/$BRANCH`: Réinitialise tous les changements à partir de la branche actuelle
+
+`git rebase -i master`: Permet de façon interactive de manipuler les _commits_ sur notre branche depuis la "fork" avec _master_
+
+ℹ️ en cas de `drop` `squash` de _commits_ vous devrez faire `git push origin HEAD -f` car vous ne respectez plus l'historique des commits.
+
+`git checkout <fichier-ou-dossier>`: Restore le fichier ou dossier par rapport au dernier _commit_
+
+==== Personaliser votre client git
+
+En créant un fichier `~/.gitconfig` vous pouvez personaliser votre configuration git
+
+[code,txt]
+----
+[user]
+	email = xavier.bourdeau@plouf.com
+	name = xavier
+[alias]
+	dammit = !BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+&& git fetch origin $BRANCH \
+&& git reset --hard origin/$BRANCH
+[core]
+	editor = vim
+[init]
+	defaultBranch = master
+----
+
+==== _Semantic Commit Messages_
+
+Chaque environnement à sa nomenclature que vous vous devrez de respecter, néanmoins c'est une très *très* bonne
+habitude de bien nommer chaque branche et chaque _commit_. Vous ou vos successeurs et collaborateurs vous remercierons...
+d'ici quelques années. 🧔
+
+```sh
+git commit -m 'chore(api): update lib XXX'
+git branch fix/component/explanation-of-the-branch-purpose
+```
+
+Exemples:
+
+  * feat: (new feature for the user, not a new feature for build script)
+  * fix: (bug fix for the user, not a fix to a build script)
+  * docs: (changes to the documentation)
+  * style: (formatting, missing semi colons, etc; no production code change)
+  * refactor: (refactoring production code, eg. renaming a variable)
+  * test: (adding missing tests, refactoring tests; no production code change)
+  * chore: (updating grunt tasks etc; no production code change)
+
+=== gh
+
+Créer une _pull request_
+
+```sh
+gh pr create --title "Title of the PR" --body "Description of the PR" --base main --head new-branch-name
+```
+
+Merge une _pull request_:
+```
+gh pr merge --merge
+```
+ℹ️ Vous pouvez aussi ajouter `--squash` ou `--rebase` pour une autre stratégie de "merge"
+
+
+Ajouter un _label_ à une PR
+
+```sh
+gh pr edit <PR-number> --add-label "label-name"
+```
+
+== Méthodes de Déploiement d'Applications
+
+Dans le domaine du développement logiciel, il existe plusieurs méthodologies utilisées pour concevoir, structurer et déployer des applications.
+Parmi elles, on peut citer une architecture monolithique, des micro-services, et d'autres approches de déploiement comme les services _serverless_ et les conteneurs.
+Nous examinerons les avantages et les inconvénients de chaque méthode afin de vous aider à choisir l'approche la plus adaptée à vos projets futurs.
+
+Ci-dessous une liste de composants assez typique d'une application de taille moyenne
+
+ - Un frontend sur nodejs + Angular
+ - Deux backends en java + SpringBoot avec une API privée et une API publique
+ - Des fonctions déportées (Lambda chez AWS ou Cloud function chez GCP)
+ - De l'infra-as-code (terraform)
+ - Un schéma de base de données "as-code" (Liquibase ou Flyway)
+ - etc...
+
+Chaque architecture et méthodologie de déploiement a ses propres avantages et inconvénients.
+
+=== Architecture Monolithique
+
+Une application monolithique est une application logiciel construite comme une seule unité indivisible.
+Cela signifie que toutes les fonctionnalités et composants de l'application sont codés, testés, déployés et mis à l'échelle en même temps.
+
+Avantages:
+
+- **Simplicité de développement** : Une structure unique rend le développement plus simple car tous le code se trouve au même endroit.
+- **Environnement unique de déploiement** : Une version commune à tous les composants facilite les opérations de déploiement.
+- **Facilité de test et de débogage** : Tester et déboguer sont plus faciles car tous les composants sont dans le même contexte.
+
+Inconvénients:
+
+- **Maintenabilité** : À mesure que l'application grandit, le code devient complexe et difficile à maintenir, long à packager ou déployer.
+- **Mises à jour risquées** : Une mise à jour nécessite le redéploiement de la totalité de l'application, ce qui augmente le risque de pannes.
+- **Évolutivité limitée** : Difficile de mettre à l'échelle les parties spécifiques de l'application sans répliquer l'ensemble du système.
+
+=== Architecture à Micro-services
+
+Une application basée sur des micro-services est divisée en petites unités de service autonomes, chacune responsable d'une fonction métier spécifique.
+Généralement ces services communiquent entre eux via des API.
+
+Avantages:
+
+- **Flexibilité de développement** : Les équipes peuvent travailler sur différents services de manière indépendantes.
+- **Déploiement indépendant** : Chaque service peut être mis à jour, déployé et mis à l'échelle de manière indépendante.
+- **Résilience** : La défaillance d'un service n'affecte pas nécessairement les autres services.
+
+Inconvénients:
+
+- **Complexité du développement** : Tant le schéma des bases données que le respect des normes de communication peuvent être rendus complexes.
+- **Complexité des déploiements** : Orchestrer le déploiement de nombreux services peut être complexe.
+- **Surveillance et débogage** : Suivre et déboguer une application distribuée nécessite des outils et des compétences supplémentaires.
+- **Dégradation des performances** : Les communications inter-services peuvent introduire des latences.
+
+=== Architecture multi-tiers
+
+Une architecture multi-tiers, ou architecture en couches, est un modèle de conception dans lequel une application est divisée en plusieurs couches  distinctes qui se séparent selon leurs responsabilités. Typiquement, une architecture à trois tiers est la plus fréquente et comprend :
+
+1. Présentation (ou client ou frontend) : Elle comprend l'interface utilisateur et les composants avec lesquels l'utilisateur interagit directement, tels que les pages web ou les applications mobiles.
+
+2. Logique métier (ou application ou backend) : Cette couche gère la logique principale de l'application, les règles métiers, ainsi que le traitement des données.
+
+3. Données (ou base de données) : Elle est responsable du stockage, de la récupération et de la gestion des données de l'application.
+
+Avantages:
+
+* **Modularité** : Chaque couche est indépendante des autres, ce qui permet de gérer, maintenir et mettre à jour chaque couche sans affecter les autres.
+* **Réutilisabilité** : Les composants de chaque couche peuvent être réutilisés dans d'autres projets ou applications.
+* **Sécurité** : Il est plus facile de mettre en place des contrôles de sécurité à chaque niveau, réduisant ainsi le risque d'atteinte de bout en bout.
+* **Évolutivité** : Les architectures multi-tiers permettent de faire évoluer différentes parties de l'application de manière indépendante, rendant plus facile le redimensionnement selon les besoins.
+* **Gestion de la performance** : En séparant les fonctions sur différents serveurs (ou environnements), on peut améliorer les performances en évitant les goulets d'étranglement.
+
+Inconvénients:
+
+* **Complexité** : La conception, le développement et la gestion sont plus complexes par rapport à une architecture simple. Plus de couches impliquent plus de gestion et de coordination.
+* **Performance** : La communication entre les différents tiers peut introduire des latences. Chaque appel entre les couches peut ajouter un temps de traitement supplémentaire.
+* **Coût** : L'implémentation et l'entretien de plusieurs couches peuvent nécessiter plus de ressources financières et humaines.
+Problèmes de déploiement : Le déploiement de chaque couche sur différents serveurs ou dans différents environnements peut être compliqué.
+
+== Les 4 phases d'un déploiement
+
+Dans un déploiement il existe quatres grandes périodes qu'il convient de distinguer. Les exemples cités ci-dessous vont sans cesse varier selon l'application,
+les contraintes techniques ou encore l'héritage de vos prédécesseurs (dette technique).
+
+=== La préparation
+
+**Gestion sémantique de version**: Avant même de créer un _release_, on définit sont quel numéro incrémenter: v[Majeur].[Mineur].[Correctif]
+
+  * le numéro de version MAJEUR quand il y a des changements non rétrocompatibles,
+  * le numéro de version MINEUR quand il y a des ajouts de fonctionnalités rétrocompatibles,
+  * le numéro de version de CORRECTIF quand il y a des correctifs
+
+Dès lors que la verion est créée -- cela correspond bien souvent à la création d'un Tag -- elle est packagée, testée, déployée
+
+Au minimum un environnement de pré-production permet de valider que l'application a bien été packagée et que le système de déploiement sera prêt pour la mise
+en production.
+
+**Mise à jour du ChangeLog**: Tous les ajouts et les correctifs doivent être inscrits dans le ChangeLog
+
+=== pré-déploiement
+
+Collecte des informations: Toutes les valeurs propres à l'environnement doivent-être collectés. Il peut s'agir de manifestes d'application, de récupération
+des dernières versions de paquets etc.
+
+Activation de la page de maintenance: Notre client doit comprendre pourquoi son application ne fonctionne plus, une erreur 503 ne le satisfera pas.
+
+| Si vous déployez un _front_, pensez à mettre les bonnes entêtes pour que votre page de maintenance ne soit pas mise en cache par votre CDN ou les navigateurs
+de vos clients
+
+Exemple de configuration d'un serveur nginx
+
+
+```conf
+server {
+  listen 8080;
+
+  add_header Cache-Control 'no-cache, no-store, must-revalidate';
+  add_header Pragma no-cache;
+  add_header Expires 0;
+}
+location @maintenance {
+  rewrite ^(.*)$ /maintenance.html break;
+}
+location / {
+  return 503;
+}
+error_page 503 @maintenance;
+
+```
+
+Arrêt des applications: Souvent nécessaire dans des cas d'_upgrade_ complexe comme:
+
+  * Mise à jour d'une base de données
+  * Mise à jour de l'infrastructure
+  * Mise à jour du schéma
+
+=== Déploiement
+
+Déploiement de l'infrastructure:
+
+  * Mise à jour des fonctions déportées
+  * Mise à jour des resources _cloud_
+  * Mise à jour du schéma de la base de données
+  * Mise à jour des secrets
+
+Déploiement des nouveaux manifestes applicatifs
+
+=== Post-déploiements
+
+Quelques étapes classiques:
+
+  * Rafraichissement des indexes
+  * Forcer l'application des droits
+  * Mise à l'échelle de l'application
+  * Informer de la fin de la mise à jour
+
+=== Le retry
+
+Le _retry_ améliore la résilience des pipelines d'intégration et de déploiement. En cas d'erreurs intermittentes ou temporaires, comme les problèmes de réseau ou de ressources système, un nouvel permettra de "sauver" une mise en production et permettant ainsi aux équipes technique de terminer une mise à jour manuellement ou de
+devoir recommencer tout le cycle.
+
+== _Tracing_ et _alerting_ des modifications
+
+Le _tracing_, ou traçabilité, se réfère à la capacité de suivre le chemin d'une modification de son origine jusqu'à son déploiement en production.
+
+Cela implique de garder une trace complète de toutes les actions effectuées sur le système, notamment les _commits_, les _builds_, les tests,
+et les déploiements.
+
+Le but du _tracing_ est de s'assurer que chaque modification peut être retracée à son auteur, et chaque changement peut être analysé en cas de dysfonctionnement.
+
+Pour établir une traçabilité efficace dans un _pipeline CI/CD_, on utilise différents outils et pratiques :
+
+* Systèmes de contrôle de version (VCS) tels que Git, qui fournissent un historique détaillé de tous les _commits_.
+* _Pipelines CI/CD_ qui loggent automatiquement toutes les opérations effectuées.
+* Systèmes de gestion des _builds_ comme Jenkins, GitLab CI/CD, ou CircleCI qui génèrent des _logs_ détaillés de chaque étape du _build_.
+* Outils de _monitoring_ et de _logging_ tels que Prometheus, Grafana, et ELK Stack (Elasticsearch, Logstash, Kibana) qui permettent de surveiller en temps réel et d'analyser les _logs_ et les métriques des applications déployées.
+
+=== Un système d'alerte robuste
+
+L'alerte est le processus qui nous signale lorsqu'une condition prédéfinie, souvent une erreur ou un ensemble d'erreurs, est détectée.
+Dans un pipeline CI/CD, les alertes sont essentielles pour identifier rapidement les défauts et réagir en temps opportun afin de minimiser les effets
+néfastes.
+
+* Définition des seuils et des conditions: Qu'il s'agisse de l'échec d'un test, de la non-conformité à une règle de sécurité, ou de la détection
+d'une dégradation de performance post-déploiement, il est crucial de définir les conditions sous lesquelles une alerte doit être déclenchée.
+* Intégration avec des outils de communication: Il est courant d'intégrer les systèmes d'alerte avec des outils de communication comme
+Slack, Microsoft Teams, emails, ou des pages de services via PagerDuty, pour s'assurer que les alertes atteignent les bonnes personnes.
+* Automatisation de la réponse: Dans beaucoup de cas, des actions automatisées peuvent être déclenchées suite à une alerte.
+Par exemple, un déploiement peut être interrompu, ou encore une instance problématique peut être redémarrée automatiquement.
+
+== Les bonnes pratiques GitOps
+
+Un peu d'histoire
+
+AWS est disponible publiquement depuis 2006, mais même avant cette date, la gestion des infrastructures _on premises_ pouvait être d'une complexité dantesque.
+Plusieurs serveurs exécutaient plusieurs applications et services, et la mise à l'échelle nécessitait que le service informatique configure manuellement un serveur entier et réinstalle les mêmes applications avec les mêmes paramètres.
+Heureusement, des outils ont été développés pour rendre cette tâche un peu plus facile.
+
+=== Première génération
+
+Les outils de première génération de gestion de configuration ou _configuration management (CM)_ comme Chef ou Puppet ont permis de grandement faciliter l'installation de serveurs par le biais d'un agent.
+Ces outils fonctionnaient déjà _on premises_ et _on cloud_
+
+=== Deuxième génération: l'idempotence
+
+Les outils CM de première génération étaient un moyen efficace de reproduire toutes les étapes de configuration de nouveaux
+serveurs de production. Ces étapes étant désormais automatisées, la configuration de nouveaux serveurs est devenue beaucoup plus facile. Cependant,
+ils ne provisionnaient toujours pas de nouvelles machines virtuelles et ne fonctionnaient pas bien avec l'infrastructure native du _cloud_.
+
+Ensuite sont venus les outils CM de deuxième génération comme **Ansible** et **SaltStack**. Ces outils peuvent installer des logiciels
+sur des serveurs individuels sans nécessité d'agent, mais peuvent également provisionner des machines virtuelles avant de les
+configurer. Par exemple, ils peuvent créer dix instances EC2, puis installer tous les logiciels nécessaires sur chacune de ces instances.
+
+L'un des principaux inconvénients de ces outils CM est qu'ils ne se contentent que de provisionner et de configurer des serveurs
+et des machines virtuelles. Ils n'offrent pas de solutions pour les services _cloud_ natifs
+
+image::images/ansible.png[]
+
+**Définition de l'Idempotence**
+
+L'idempotence est une propriété d'une opération qui permet d'obtenir le même résultat, qu'elle soit appliquée une seule fois ou plusieurs fois de suite.
+Autrement dit, exécuter une opération idempotente plusieurs fois n'aura pas plus d'effet qu'une seule exécution.
+
+Importance de l'Idempotence:
+
+  * **Prévisibilité** : Vous pouvez exécuter vos tâches Ansible plusieurs fois sans craindre des effets indésirables. Cela garantit que l'état final de votre système est prévisible et stable.
+  * **Rejouabilité** : L'idempotence permet de rejouer un playbook pour corriger des erreurs ou appliquer des mises à jour sans risquer de créer des incohérences dans la configuration.
+  * **Déploiements sûrs** : Lors des déploiements continus et des mises à jour fréquentes, l'idempotence assure que chaque étape de votre playbook ne déclenche pas de modifications imprévues.
+
+=== Troisième génération: le début des descripteurs
+
+Amazon CloudFormation, ou Azure Resource Manager (ARM), ces outils permettent de créer de l'infrastructure-as-code en décrivant dans les manifestes JSON ou YAML toutes les resources nécessaires.
+
+Avantage : Fonctionne avec un contrôle de version, la révision de code et l'intégration/livraison continue (CI/CD) sur le code d'infrastructure.
+
+Inconvénient : Ce sont des technologies propriétaires et qui ne fonctionnent que chez leur constructeur
+
+
+Exemple de _cloudFormation_:
+
+[source, yaml]
+----
+AWSTemplateFormatVersion: "2010-09-09"
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: "ami-0ff8a91507f77f867"
+    us-west-1:
+      AMI: "ami-0bdb828fd58c52235"
+    us-west-2:
+      AMI: "ami-a0cfeed8"
+    eu-west-1:
+      AMI: "ami-047bb4163c506cd98"
+    sa-east-1:
+      AMI: "ami-07b14488da8ea02a0"
+    ap-southeast-1:
+      AMI: "ami-08569b978cc4dfa10"
+    ap-southeast-2:
+      AMI: "ami-09b42976632b27e9b"
+    ap-northeast-1:
+      AMI: "ami-06cd52961ce9f0d85"
+
+Parameters:
+  EnvType:
+    Description: Environment type.
+    Default: test
+    Type: String
+    AllowedValues: [prod, dev, test]
+    ConstraintDescription: must specify prod, dev, or test.
+
+Conditions:
+  CreateProdResources: !Equals [!Ref EnvType, prod]
+  CreateDevResources: !Equals [!Ref EnvType, "dev"]
+
+Resources:
+  EC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: !If [CreateProdResources, c1.xlarge, !If [CreateDevResources, m1.large, m1.small]]
+  MountPoint:
+    Type: "AWS::EC2::VolumeAttachment"
+    Condition: CreateProdResources
+    Properties:
+      InstanceId: !Ref EC2Instance
+      VolumeId: !Ref NewVolume
+      Device: /dev/sdh
+  NewVolume:
+    Type: "AWS::EC2::Volume"
+    Condition: CreateProdResources
+    Properties:
+      Size: 100
+      AvailabilityZone: !GetAtt EC2Instance.AvailabilityZone`
+----
+
+Terraform - ou OpenTofu sa version libre depuis le rachat par IBM - permet non seulement de créer de l'_infrastructure as code_, mais permet également:
+
+* la création de module, rendant le code réutilisable
+* La création de liste permettant de créer des boucles _for each_
+* La quasi-totalité des fournisseurs de resource _cloud_ mettent à disposition des modules _Terraform_ versionnés, _open source_ et souvent maintenus par la communauté.
+
+[source,hcl]
+----
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#-_"
+}
+
+resource "aws_db_instance" "test_postgres" {
+  identifier             = "postgres-test-${random_id.db_name_suffix.hex}"
+  engine                 = "postgres"
+  engine_version         = "13"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  storage_type           = "gp3"
+  storage_encrypted      = false
+  username               = "thebigboss"
+  password               = random_password.password.result
+  skip_final_snapshot    = true
+}
+----
+
+=== Le DevOps
+
+"DevOps" est une contraction de "Development" (développement) et "Operations". Le DevOps est l'ensemble des méthodes et pratiques qui permettent à des équipes de développement, ainsi qu'aux équipes d'exploitation de travailler ensemble de manière collaborative.
+
+Le mouvement DevOps existe depuis 2015. Le link:https://devopsdays.org/[DevOps D-Day,window=_blank] est un évènement mondial qui rassemble tous les acteurs du monde des technologies de l'information, notamment du Libre.
+
+Objectifs principaux de DevOps:
+
+**Automatisation** : Automatiser autant que possible les processus de développement, de déploiement et de gestion des infrastructures pour réduire les erreurs humaines et augmenter la vitesse des livraisons.
+
+**Intégration continue (CI)** : Permettre aux développeurs d'intégrer fréquemment leurs modifications de code dans le dépôt partagé. Chaque intégration peut être vérifiée par une build automatisée (par exemple, tests unitaires) pour détecter rapidement les erreurs.
+
+**Livraison continue (CD)** : Étendre l'intégration continue en déployant automatiquement les nouvelles versions de l'application sur des environnements de test, et potentiellement de production, pour permettre des mises à jour fréquentes et fiables.
+
+**Surveillance et Log Management** : Mettre en place une supervision continue des applications et des infrastructures pour détecter et résoudre les problèmes rapidement.
+
+**Culture de collaboration** : Encourager une culture de collaboration et de communication ouverte entre les équipes de développement et d'exploitation. Ceci inclut des réunions régulières, des _feedbacks_ continus et des outils de communication partagés, des échanges dans les équipes, des formations etc...
+
+**Lean** : Faire plus avec moins. Cela s'inspire du Lean Manufacturing qui cherche à éliminer le gaspillage de temps et de ressources.
+
+**Boucles de rétroaction** : Les retours des utilisateurs, des équipes et des systèmes eux-mêmes alimentent l'amélioration continue.
+
+[ditaa, target="ci"]
+....
+
+                 /-------------------------\ /--------------------------\
+                 |                         | |                          |
+                 :                         v :                          v
++------+     +---+--+     +-------+     +--+-+-+     +---------+     +--------+     +---------+     +---------+
+|      |     |      |     |       |     |      |     |         |     |        |     |         |     |         |
+| Plan +---->+ Code +---->+ Build +---->+ Test +---->+ Release +---->+ Deploy +---->+ Operate +---->+ Monitor |
+|      |     |      |     |       |     |      |     |         |     |        |     |         |     |         |
++------+     +------+     +-------+     +------+     +---------+     +--------+     +---------+     +---------+
+                 ^                         : ^                          :
+                 |                         | |                          |
+                 \-------------------------/ \--------------------------/
+                                            |
+                 +- Continuous Integration -+- Continuous Deployment -+
+....
+
+==== CI
+
+CI : “Continuous Integration” en anglais ou “Intégration continue” en français.
+
+| Ensemble d'étapes qui englobent le “build”, les tests et la fusion du code (merge)
+
+▶️ Pourquoi le mot intégration ? Car l'approche CI/CD tend à **intégrer** régulièrement des modifications au code, et donc apporter rapidement - en continue - de nouvelles fonctionnalités ou des correctifs.
+
+==== CD
+
+CD: “Continuous Deployment en anglais ou “Déploiement continue”,
+
+| Ensemble d'étapes la mise à disposition du "build" aux environnements et deployement sur les environments
+
+[En bref], Un _pipeline_ d'intégration et de déploiement continus (CI/CD) est une série d'étapes à réaliser en vue de la distribution d'une nouvelle version d'un logiciel
+
+=== Le GitOps
+
+Le GitOps reprend toutes les bonnes pratiques du Devops. Il combine Git et la gestion des ressources. Git est un système de contrôle de version qui permet
+de suivre la modification du code. Comme le Devops, il utilise la CI/CD pour déployer automatiquement l'infrastructure et ses applications en utilisant uniquement
+du code, des manifestes, des paramètres définis dans le code.
+
+L'utilisation des fonctionnalités de Git permet de voir l'historique complet des modifications du code (application ET infrastructure) et permet aux équipes de
+revenir à une version antérieure si nécessaire instantanément.
+
+L'utilisation de Git permet aussi la création de _Pull Request_ (GitHub) ou _Change Request_ (GitLab) qui vont permettre la révision du code par les autres membres
+de l'équipe. Ainsi, la fusion des multiples PR (ou CR) donnera toujours un code cohérent et sans conflit. Cela paraît logique pour le code d'application, cela l'est tout autant pour le code d'infrastructure.
+
+On commence à comprendre qu'il est possible de mettre dans le même silo, l'application et l'infrastructure.
+
+**GitOps = IaC + MRs + CI/CD**
+
+ * IaC (_infrastructure as code_) : GitOps utilise un _repository_ Git comme source unique de vérité pour définir l'infrastructure cible.
+ * MRs (or PRs) : GitOps ne fusionne son code qu'à travers des _Merge_Request_ ou des _Pull_Request_ afin de collaborer par des _revues_codes_.
+ * CI : Le code est testé, _build_ à chaque _commit_ de chaque branche. Les MRs ne pourront être fussionnées avec la branche parente que si les tests passent
+ * CD : Chaque _build_ est déployé en production
+
+=== Le SecOps
+
+"SecOps" est une contraction de "Security" et "Operations"
+
+Il s'agit d'une approche qui cherche à intégrer les pratiques de sécurité à chaque étape du cycle de vie du logiciel. L'objectif clé de SecOps est de créer une culture où la sécurité est une responsabilité partagée et continue au sein de l'organisation, plutôt qu'une étape isolée dans le processus de développement.
+
+**Security by Design** : Intégrer les considérations de sécurité dès le début du cycle de développement et tout au long de celui-ci (Shift-Left Security).
+
+**Automatisation de la sécurité** : Automatiser les tâches de sécurité comme la gestion des vulnérabilités, les tests de sécurité et la surveillance pour réduire les erreurs humaines et accroître l'efficacité.
+
+**Réduction de la surface d'attaque** : Minimiser les vecteurs d'attaque potentiels par des pratiques comme la gestion des configurations, le durcissement du système et la gestion des accès.
+
+**Surveillance continue*** : Mettre en place une surveillance et des alertes continues pour détecter et répondre rapidement aux incidents de sécurité.
+
+**Conformité et gestion des risques** : Assurer la conformité aux régulations et standards de sécurité, et gérer les risques de manière proactive.
+
+Outils SecOps couramment utilisés:
+
+SIEM (Security Information and Event Management) : Outils comme Splunk, ELK Stack, ou IBM QRadar pour la collecte et analyse des journaux et la gestion des événements de sécurité.
+
+Scanners de Vulnerabilités : Outils comme Nessus, OpenVAS pour automatiser la découverte des failles de sécurité dans les systèmes et applications.
+
+Gestion des identités et des accès (IAM) : Outils comme Okta, AWS IAM pour gérer de manière sécurisée les identités et les accès aux ressources.
+
+Gestion des configurations : Outils comme Ansible, Chef, Puppet pour automatiser les configurations sécurisées des environnements.
+
+Containers et Sécurité Cloud : Outils comme Aqua Security, Twistlock, et services intégrés aux cloud comme AWS Security Hub, Azure Security Center pour la sécurité des environnements conteneurisés et cloud.
+
+Pare-feux et IDPS : Utiliser des solutions comme Palo Alto, FireEye, et des systèmes de détection et prévention des intrusions (IDPS).
+
+Cas d'utilisation de SecOps:
+
+DevSecOps : Intégrer des pratiques de sécurité dans le pipeline CI/CD pour détecter et corriger les vulnérabilités dès le développement jusqu'au déploiement.
+
+Gestion des incidents : Établir des équipes de réponse aux incidents de sécurité (CSIRT) et des plans de réponse pour réagir rapidement aux menaces détectées.
+
+Conformité réglementaire : Automatiser les vérifications de conformité pour des standards comme GDPR, HIPAA, PCI-DSS grâce à des outils de SecOps.
+
+=== Le FinOps
+
+FinOps, contraction de "Finance" et "Operations", est une pratique émergente axée sur la gestion des coûts liés au cloud computing. A mesure que les entreprises adoptent de plus en plus les services cloud, la gestion et l'optimisation de ces coûts deviennent cruciaux pour maintenir une efficacité financière, mais aussi pour éviter les mauvaises suprises financière.
+
+Principaux objectifs du FinOps :
+
+* **Visibilité** : Permettre aux équipes de voir et comprendre la répartition des coûts et les consommations des services cloud.
+* **Responsabilité** : Attribuer les coûts aux équipes ou aux projets spécifiques, responsabilisant ainsi les équipes sur leurs dépenses.
+* **Optimisation** : Encourager les bonnes pratiques pour gérer et réduire les coûts sans compromettre les performances et la qualité.
+
+L'intégration des pratiques FinOps dans vos processus CI/CD nécessite non seulement une bonne compréhension de la gestion des coûts du cloud, mais aussi l'adoption d'une culture financière et opérationnelle collaborative
+
+==== Cas Pratiques
+
+**Instrumentation des Coûts:**
+
+* Utiliser le module AWS Billing and Cost Management pour suivre les coûts en temps réel.
+* Intégrer des plugins Jenkins pour surveiller les coûts des builds et des déploiements.
+
+**Optimisation des Ressources:**
+
+* Configurer Jenkins pour activer les instances EC2 automatiquement au démarrage des builds et les arrêter une fois le pipeline terminé.
+* Utiliser des instances spot pour les tâches de test non critiques afin de réduire les coûts.
+
+**Gestion des Environnements:**
+
+* Mettre en place un script Terraform pour créer des environnements de sandbox éphémères pour chaque pull request, et les détruire après les tests.
+* Configurer des règles pour arrêter les instances non utilisées en dehors des heures de bureau.
+
+**Responsabilisation:**
+
+* Attribuer des tags AWS comme "Project: WebApp", "Environment: Staging" et "Team: Dev", pour permettre une répartition précise des coûts.
+* Définir des budgets pour chaque sprint et envoyer des alertes lorsque les seuils budgétaires sont atteints.
+
+=== Example d'un GitFlow
+
+Imaginons:
+
+* Chaque _commit_ dans une MR est déployé dans un environnement "bac-à-sable" propre à la MR où il pourra être testé, au moins partiellement, par une équipe qualité et/ou par des outils d'automatisation de tests (Cypress ou Selenium WebDriver).
+* Un ou plusieurs dévelopeurs valident la MR
+* Si les tests sont validés, une _release_ est créée par l'intermédiaire d'un _tag_.
+* La création du _tag_ engendre la création d'un nouveau cycle CI/CD mais cette fois-ci:
+** Le _build_ n'inclut par les dépendances et outils des dévelopeurs (exemple: jmxremote pour Java).
+** Les binaires générés seront signés numériquement.
+** Une analyse des failles de sécurité valide ou invalide la release (Trivy)
+** Une nouvelle version des manifestes applicatifs et d'infrastructure est prête à être déployée sur autant d'environnements qu'imposent les normes en vigueur:
+*** demo : toutes les dernières _release_ sont déployées sans validation, le _product manager_ ou le client peut valider la fonctionnalité
+*** homologation : Un organisme extérieur valide que les normes sont bien respectées.
+*** recette : Les équipes de qualité déploient l'ensemble des tests.
+*** préproduction
+**** Les données de production anonymisées ou pseudononymisées sont restaurées
+**** Déploiement de la _release_
+**** Tests d'intrusion ponctuels
+**** Vérification de la cohérence des données et des nouvelles fonctionnalités
+*** Production : Ca y est le client peut l'utiliser, Un _changelog_ apparait sur l'interface du client afin qu'il soit au courant des dernières modifications
+ou correctifs
+* On supervise l'application et les métriques de la production
+
+
+
+== Zéro _downtime_
+
+Pour les systèmes modernes, les adminstrateurs réseaux/systèmes créent des systèmes de répartition de charge de travail sur
+plusieurs serveurs afin de garantir la haute disponibilité et la performance.
+
+
+=== _Load Balancing_
+
+Le _load balancer_ est la distribution du trafic réseau parmi plusieurs serveurs.
+
+[ditaa, target="loadbalancing"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+
+      |            |            |            |           |
+      v            v            v            v           v
+ +----------+ +----------+ +----------+ +----------+ +----------+
+ |   k8s-1  | |  k8s-2   | |  k8s-3   | |  k8s-4   | |  k8s-5   |
+ +----------+ +----------+ +----------+ +----------+ +----------+
+
+....
+
+=== _Failover_
+
+Le _failover_ est la redirection du trafic vers un autre serveur en cas de défaillance.
+
+[ditaa, target="failover"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+
+      |            |            |            |           |
+      v            v            v            v           x
+ +----------+ +----------+ +----------+ +----------+ +----------+
+ |          | |          | |          | |          | |          |
+ |   k8s-1  | |  k8s-2   | |  k8s-3   | |  k8s-4   | |  k8s-5   |
+ |          | |          | |          | |          | |      cD99|
+ +----------+ +----------+ +----------+ +----------+ +----------+
+
+....
+
+
+== _Auto-scaling_
+
+L'_auto-scaling_ permet d'ajuster dynamiquement le nombre de ressources, CPU, Mémoire, I/O en fonction de la charge.
+
+Il existe deux grandes familles d'_autoscaling_:
+
+* _vertical autoscaling_ : Les limites des resources sont augmentées par processus
+
+[ditaa, target="verticalalautoscaling"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+-------
+      |            |            |            |           |
+      v            v            v            v           v
+ +----------+ +----------+ +----------+ +----------+ +----------+
+ |          | |          | |          | |          | |          |
+ |   k8s-1  | |  k8s-2   | |  k8s-3   | |  k8s-4   | |  k8s-5   |
+ |          | |          | |          | |          | |          |
+ | front-1  | |  front-2 | |          | |          | |          |
+ |  +1 RAM  | |   +1 RAM | |          | |          | |          |
+ |          | |          | |          | |          | |          |
+ |  back-1  | |   back-2 | |          | |          | |          |
+ |  +1 CPU  | |   +1 CPU | |          | |          | |          |
+ |      cAEA| |      cAEA| |          | |          | |          |
+ +----------+ +----------+ +----------+ +----------+ +----------+
+....
+
+* _horizontal autoscaling_ : Le nombre de processus est augmenté
+
+[ditaa, target="horizontalautoscaling"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+-------
+      |            |            |            |           |
+      v            v            v            v           v
+ +----------+ +----------+ +----------+ +----------+ +----------+
+ |          | |          | |          | |          | |          |
+ |   k8s-1  | |  k8s-2   | |  k8s-3   | |  k8s-4   | |  k8s-5   |
+ |          | |          | |          | |          | |          |
+ | front-1  | |  front-2 | |  front-3 | |          | |          |
+ |  back-1  | |   back-2 | |   back-3 | |          | |          |
+ |          | |          | |      cAEA| |          | |          |
+ +----------+ +----------+ +----------+ +----------+ +----------+
+....
+
+* Pour Kubernetes ou Openshift, on peut mettre en place un _node autoscaling_
+
+[ditaa, target="nodeautoscaling"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+--------------+-----------+
+      |            |            |            |           |              |           |
+      v            v            v            v           v              v           v
+ +----------+ +----------+ +----------+ +----------+ +----------+ +----------+ +----------+
+ |          | |          | |          | |          | |          | |          | |          |
+ |   k8s-1  | |  k8s-2   | |  k8s-3   | |  k8s-4   | |  k8s-5   | |  k8s-6   | |  k8s-7   |
+ |          | |          | |          | |          | |          | |      cAEA| |      cAEA|
+ +----------+ +----------+ +----------+ +----------+ +----------+ +----------+ +----------+
+
+....
+
+
+
+=== Rollout
+
+Le _rollout_ est une méthode de déploiement de nouvelles versions de services sans interruption. Les techniques couramment utilisées sont :
+
+==== Blue-Green Deployment
+
+Un déploiement _Blue-Green_ est une stratégie de déploiement dans laquelle vous créez deux environnements distincts, mais identiques.
+Un environnement (bleu) exécute la version actuelle de l'application et un environnement (vert) exécute la nouvelle version de l'application.
+
+L'utilisation d'une stratégie de déploiement bleu/vert augmente la disponibilité de l'application et réduit les risques de déploiement en simplifiant le processus de restauration en cas d'échec d'un déploiement.
+Une fois les tests terminés sur l'environnement vert, le trafic d'application en direct est dirigé vers l'environnement vert et l'environnement bleu est obsolète.
+
+
+[ditaa, target="bluegreen"]
+....
+
+              +--------------+
+              |  LoadBalancer|
+              +-------+------+
+                      |
+          +------------+-----------+
+          |                        |
+  +-------+-------+        +-------+-------+
+  |               |        |               |
+  |    v1.0.9     |        |    v2.0.0     |
+  |          c7CF |        |          c7FA |
+  +---------------+        +---------------+
+
+....
+
+==== Canary Deployment
+
+Un déploiement _Canary_ est un déploiement progressif d'une application, il fait partie des méthodes de déploiement segmentées, qui répartit
+le trafic entre une version déjà déployée et une nouvelle version, en la déployant auprès d'un sous-ensemble d'utilisateurs avant de la déployer
+complètement.
+
+Dans un déploiement _Canary_ le retour arrière est automatique dès les premiers signaux négatifs.
+
+==== AB Testing
+
+L'_AB Testing_ est une technique utilisée pour tester différentes versions d'un produit, d'un service ou d'une fonctionnalité auprès de segments spécifiques d'utilisateurs ou de clients.
+
+**Définition des objectifs** : Cela peut inclure l'amélioration des taux de conversion, l'augmentation de l'engagement des utilisateurs, la réduction des taux de désabonnement, la validation d'un design, etc.
+
+**Segmentation des utilisateurs** : Ces segments peuvent être basés sur divers critères tels que des caractéristiques démographiques, le comportement des utilisateurs, l'historique des achats, ou d'autres métriques pertinentes.
+
+**Création des variantes** : Développez les différentes versions du produit, du service ou de la page web que vous souhaitez tester. Par exemple, cela pourrait inclure différentes configurations de design, de contenu, de fonctionnalités, ou d'offres promotionnelles.
+
+**Allocation des utilisateurs** : Assignez de manière aléatoire chaque segment d'utilisateurs à l'une des variantes. Cette répartition aléatoire aide à garantir l'élimination des biais et à obtenir des résultats statistiquement significatifs.
+
+**Mise en œuvre du test** : Déployez les variantes aux segments correspondants et suivez les performances. Pendant cette phase, il est essentiel de monitorer soigneusement les interactions des utilisateurs, ainsi que de collecter et d'analyser les données pertinentes.
+
+**Analyse des résultats** : Une fois que vous avez suffisamment de données, analysez les performances de chaque variante. Comparez les résultats obtenus par chaque groupe pour déterminer quelle variante a atteint ou surpassé les objectifs prédéfinis.
+
+**Prise de décision** : Basé sur l'analyse des résultats, identifiez la version la plus performante. Cette version peut alors être déployée à une plus grande échelle, ou des itérations supplémentaires peuvent être réalisées pour optimiser davantage les résultats.
+
+
+=== Exemple de configuration _haproxy_
+
+Voici un exemple de configuration simple avec HAProxy:
+
+[source,conf]
+----
+global
+	log /dev/log	local1 notice
+  stats socket /var/run/haproxy/admin.sock level admin mode 660
+	chroot /var/lib/haproxy
+	stats timeout 30s
+	user haproxy
+	group haproxy
+	daemon
+	# Default SSL material locations
+	ca-base /etc/ssl/certs
+	crt-base /etc/ssl/private
+
+	# See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
+  ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+  ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+  ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+  timeout connect 5000
+  timeout client  50000
+  timeout server  50000
+	errorfile 400 /etc/haproxy/errors/400.http
+	errorfile 403 /etc/haproxy/errors/403.http
+	errorfile 408 /etc/haproxy/errors/408.http
+	errorfile 500 /etc/haproxy/errors/500.http
+	errorfile 502 /etc/haproxy/errors/502.http
+	errorfile 503 /etc/haproxy/errors/503.http
+	errorfile 504 /etc/haproxy/errors/504.http
+
+frontend main
+  mode http
+  bind :80
+  bind :443 ssl crt /etc/haproxy/certs/ strict-sni
+  http-request redirect scheme https code 301 unless { ssl_fc }
+  http-request return status 200 content-type text/plain lf-string "%[path,field(-1,/)].${ACCOUNT_THUMBPRINT}\n" if { path_beg '/.well-known/acme-challenge/' }
+  use_backend nexus         if { req.hdr(host) -i nexus.cureuil.ovh }
+  use_backend docker        if { req.hdr(host) -i docker.cureuil.ovh }
+  use_backend docker-proxy  if { req.hdr(host) -i docker-proxy.cureuil.ovh }
+  use_backend gitlab        if { req.hdr(host) -i gitlab.cureuil.ovh }
+  use_backend minio         if { req.hdr(host) -i minio.cureuil.ovh }
+  use_backend s3            if { req.hdr(host) -i s3.cureuil.ovh }
+  default_backend k8s
+
+frontend gitlab_ssh
+  mode tcp
+  bind :2223
+  use_backend gitlab_ssh
+
+backend gitlab_ssh
+  mode tcp
+  server gitlab 10.136.33.218:22 check
+
+backend nexus
+  option forwardfor
+  mode http
+  server nexus 10.136.33.247:8081 check
+
+backend docker
+  option forwardfor
+  mode http
+  server docker 10.136.33.247:8082 check
+backend docker-proxy
+  option forwardfor
+  mode http
+  server docker 10.136.33.247:8083 check
+
+backend gitlab
+  http-check expect status 200
+  option httpchk
+  mode http
+  server gitlab 10.136.33.218:80 check inter 2s rise 2 fall 3
+
+backend minio
+  option forwardfor
+  mode http
+  server minio 10.136.33.141:42829 check
+
+backend s3
+  option forwardfor
+  mode http
+  server minio 10.136.33.141:9000 check
+
+backend k8s
+  option forwardfor
+  mode http
+	balance leastconn
+  server k8s-1 10.136.33.105:80 check
+  server k8s-2 10.136.33.147:80 check
+  server k8s-3 10.136.33.70:80 check
+----
+
+Ci-dessous, le schéma de mise en oeuvre
+
+[ditaa, target="haproxy"]
+....
+                       +---------------+
+                       |    Client     |
+                       +--+---------+--+
+                          |         |
+                          v         v
+                  +-------+---+ +---+-------+
+                  |  HAProxy  | |  HAProxy  |
+                  +-----+-----+ +-----+-----+
+                        |             |
+                        |             |
+      +------------+----+-------+-----+------+-----------+
+      |            |            |            |           |
+      v            v            v            v           v
++----------+ +----------+ +----------+ +----------+ +----------+
+|  gitlab  | |  nexus   | |  minio   | |   k8s-1  | |  k8s-2   | ...
++----------+ +----------+ +----------+ +----------+ +----------+
+....
+
+* Il est également possible d'inclure links:https://www.haproxy.com/documentation/haproxy-lua-api/getting-started/introduction/[des scripts LUA]
+
+[code,lua]
+----
+core.register_service("hello_world_tcp", "tcp", function(applet)
+  applet:send("hello world\n")
+end)
+
+core.register_service("hello_world_http", "http", function(applet)
+  local response = "The path which was requested is: '" .. applet.path .. "'\n"
+  applet:set_status(200)
+  applet:add_header("content-length", string.len(response))
+  applet:add_header("content-type", "text/plain")
+  applet:start_response()
+  applet:send(response)
+end)
+----
+[code,txt]
+----
+global
+  lua-load /tmp/hello_world.lua
+
+frontend http_test
+  bind 127.0.0.1:81
+  mode http
+  tcp-request inspect-delay 1s
+  http-request use-service lua.hello_world_http
+
+frontend tcp_test
+  bind 127.0.0.1:82
+  mode tcp
+  tcp-request inspect-delay 1s
+  tcp-request content use-service lua.hello_world_tcp
+----
+
+* D'inclure des critères de priorité
+
+[code,txt]
+----
+backend web_servers
+  balance roundrobin
+  acl is_checkout path_beg /checkout/
+  http-request set-priority-class int(1) if is_checkout
+  http-request set-priority-class int(2) if !is_checkout
+  timeout queue 30s
+  server s1 192.168.0.10:80 maxconn 30
+  server s2 192.168.0.11:80 maxconn 30
+  server s3 192.168.0.12:80 maxconn 30
+----
+
+== HealthCheck
+
+Les _health checks_ (vérifications de santé) sont une pratique essentielle pour s'assurer que les services fonctionnent correctement dans un environnement
+de production. Ils permettent de surveiller la disponibilité et l'état de santé des applications déployées.
+
+Dans le cadre d'un déploiement sur Kubernetes, les _health checks_ sont cruciaux pour automatiser les décisions telles que redémarrer
+un conteneur non sain en retirant du trafic les instances d'un service défaillant.
+
+=== Trois phases de sondes:
+
+* **Liveness Probe** : Permet de vérifier si l'application en cours d'exécution est toujours "vivante". Si cette vérification échoue, Kubernetes redémarre le conteneur.
+
+* **Readiness Probe** : Permet de vérifier si le conteneur est en état de recevoir du trafic. Si cette vérification échoue, Kubernetes arrête d'envoyer du trafic vers le conteneur.
+
+* **Startup Probe**: Permet de vérifier que l'application a terminé de démarrer. Elle est souvent peu couteuse pour permettre à l'application de démarrer plus vite.
+Les sondes de _liveness_ et la _readiness_ sont désactivées tant que cette sonde n'est pas validée
+
+=== Les types de sondes:
+
+* **HTTP GET Probes**: Ce type de probe envoie une requête HTTP GET à une URL spécifique.
+
+* **TCP Socket Probes** : Ce type de _probe_ tente de se connecter à une adresse TCP spécifiée. Si la connexion est établie, la _probe_ est considérée comme réussie
+
+* **Exec Probes** : Ce type de _probe_ exécute une commande spécifique dans le conteneur. Si la commande renvoie un code de sortie 0, la _probe_ est réussie.
+
+=== Scraping vs Pooling
+
+==== Pooling
+
+Dans cette approche, Les hôtes envoies les métriques à l'outil de supervision soit de façon période, soit lors d'évènement particulier. Les intervalles de sondage peuvent être configurés pour s'adapter aux exigences spécifiques de surveillance.
+
+==== Scraping
+
+Prometheus utilise une méthode appelée "scraping", où il extrait activement des métriques à partir des endpoints HTTP/HTTPS exposés par les applications. Les applications surveillées doivent exposer des métriques dans un format supporté par Prometheus.
+
+**Spécificité de Prometheus**
+
+* Base de Données de Séries Temporelles : Prometheus utilise une base de données optimisée pour les séries temporelles, ce qui lui permet de gérer efficacement de grandes quantités de données métriques. Cette structure est particulièrement adaptée à la surveillance et à l'analyse de la performance des systèmes sur des périodes prolongées.
+* Langage de Requêtes (PromQL) : Offrant des capacités de requêtes puissantes et flexibles, PromQL permet une analyse approfondie des métriques.
+* Alerting : Prometheus dispose de son propre système d'alerte qui peut être intégré avec d'autres outils tels que Alertmanager.
+* Précision des Métriques
+* Détails des Scrapes : Les données sont collectées par intervalles, ce qui signifie que des événements transitoires entre les scrapes peuvent être manqués. La précision des métriques peut donc varier en fonction de la fréquence des scrapes.
+* Efficacité de la Base de Données : La base de séries temporelles est extrêmement efficace pour stocker et interroger de grandes quantités de données métriques, mais elle peut également comprimer les données, ce qui peut parfois entraîner une perte de précision.
+
+**Avantages** :
+
+* Adapté pour la surveillance de nouvelles applications Cloud-Native.
+* Grande flexibilité dans la requête et l'alerte des métriques.
+* Extensible et bien intégré dans l'écosystème Kubernetes.
+* Très simple de créer ses propres sondes
+
+**Inconvénients** :
+
+* Les métriques peuvent ne pas capturer des événements transitoires.
+* Nécessite que les applications exposent activement des métriques
+
+== Transparence client (CachetHQ)
+
+Le _Transparence Client_ est une pratique qui consiste à maintenir les clients informés de l'état des services et de toutes perturbations éventuelles
+de manière proactive et continue. À l'ère numérique actuelle, où les services en ligne sont essentiels pour de nombreuses entreprises,
+la transparence et la communication proactive avec les clients sont devenues des piliers fondamentaux de la relation client.
+L'un des outils permettant de mettre en œuvre cette transparence de manière efficace est _CachetHQ_.
+
+* **Tableau de bord d'état (Status Page)** : Un tableau de bord en ligne qui affiche l'état actuel de tous les services que l'entreprise propose. Il indique si un service est opérationnel, partiellement opérationnel, en maintenance programmée ou en panne.
+
+Des exemples chez link:https://status.circleci.com/[CircleCi], link:https://www.githubstatus.com/[GitHub], link:https://www.dockerstatus.com/[Docker],
+link:https://health.aws.amazon.com/health/status[AWS], link:https://azure.status.microsoft/en-us/status[Azure],
+link:https://status.cloud.google.com/?hl=fr[GCP]
+
+* **Incidents** : Des enregistrements d'événements qui perturbent le fonctionnement normal des services. _CachetHQ_ permet de créer, mettre à jour et résoudre des incidents, tout en tenant les utilisateurs informés tout au long du processus.
+
+* **Composants** : Les services ou parties des services dont l'état est suivi. Chaque composant peut avoir un état individuel, ce qui permet une granularité fine dans le suivi et la communication des avaries.
+
+* **Notifications** : _CachetHQ_ permet de notifier automatiquement les utilisateurs via diverses options comme les emails, les SMS ou les flux RSS, informant les clients des nouveaux incidents ou de la résolution de problèmes.
+
+* **Maintenance programmée**: Ce module permet d'annoncer à l'avance les périodes de maintenance planifiées pour informer les utilisateurs des perturbations prévues.
+
+
+== Metric applicatives
+
+Les métriques applicatives sont des indicateurs essentiels permettant aux équipes techniques de surveiller, diagnostiquer et optimiser
+les performances des applications. Elles offrent une vision approfondie des comportements et des interactions au sein des systèmes logiciels,
+facilitant ainsi la détection et la résolution rapide des anomalies.
+
+Les métriques applicatives permettent également la mise à l'échelle dynamique des applications pour s'adapter à la charge, et réduire les coûts le cas échéant.
+
+Les métriques applicatives sont essentielles pour plusieurs raisons :
+
+* **Surveillance des Performances** : Elles permettent de mesurer la réactivité et l'efficacité des applications, notamment en termes de temps de réponse,
+utilisation des ressources, et nombre de requêtes traitées.
+
+* **Réduction des Temps d'Arrêt** : En détectant les anomalies ou les baisses de performance avant qu'elles ne provoquent des pannes,
+les métriques aident à prévenir les temps d'arrêt coûteux.
+
+* **Optimisation Continue** : Elles fournissent des données précieuses qui permettent aux équipes de développement et d'exploitation de repérer
+les goulots d'étranglement et d'optimiser les performances globales.
+
+* **Satisfaction des Utilisateurs** : En maintenant un niveau de performance élevé, les équipes assurent une meilleure expérience utilisateur, ce qui est
+crucial pour la fidélisation.
+
+=== Catégories de métriques applicatives:
+
+Elles peuvent être catégorisées en plusieurs types, chacun ayant sa propre valeur pour la surveillance et l'optimisation.
+
+*Métriques de Performance :
+
+**Latence des requêtes (temps de réponse pour les requêtes entrantes)
+**Taux de réussite des requêtes (pourcentage de requêtes traitées avec succès)
+**Taux d'erreurs (nombre de requêtes ayant échoué)
+*Métriques de Ressources :
+**Utilisation du CPU et de la mémoire
+**Connexions actives à la base de données
+**Utilisation du disque et de la bande passante réseau
+*Métriques de Trafic :
+**Nombre de requêtes par seconde
+**Distribution géographique des requêtes
+**Charges par instance ou par service
+
+=== intrumentation des applications
+
+Avant de pouvoir collecter les métriques, les applications doivent être instrumentées pour exposer ces métriques.
+Divers clients de bibliothèques sont disponibles pour différentes plateformes et langages (Go, Java, Python, etc.).
+
+Exemple en Go :
+
+```go
+package main
+
+import (
+    "net/http"
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var httpRequests = prometheus.NewCounterVec(
+    prometheus.CounterOpts{
+        Name: "http_requests_total",
+        Help: "Total number of HTTP requests",
+    },
+    []string{"path"},
+)
+
+func init() {
+    prometheus.MustRegister(httpRequests)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    httpRequests.With(prometheus.Labels{"path": r.URL.Path}).Inc()
+    w.Write([]byte("Hello, Prometheus!"))
+}
+
+func main() {
+    http.Handle("/metrics", promhttp.Handler())
+    http.HandleFunc("/", handler)
+    http.ListenAndServe(":8080", nil)
+}
+```
+
+Prometheus doit être configuré pour interroger l'_endpoint_ _/metrics_ de votre application. Voici un exemple de configuration :
+
+```yaml
+scrape_configs:
+  - job_name: 'myapp'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:8080']
+```
+
+
+
+== Alerting
+
+Les alertes sont une composante cruciale dans toute infrastructure de production. Elles permettent aux équipes de surveillance de réagir promptement
+aux anomalies et aux défaillances ainsi que de maintenir la haute disponibilité et la fiabilité des services offerts.
+
+L'un des outils de surveillance les plus polyvalents pour collecter des métriques et déclencher des alertes est Prometheus.
+Prometheus offre une riche suite de fonctionnalités pour l'extraction, l'agrégation et l'alerte sur les données de performance système,
+notamment à travers son langage de requête puissant, _PromQL_.
+
+=== Example promql
+
+Cette règle vérifie si une instance a une métrique _up_ égale à zéro (ce qui signifie que le service est inactif) pendant plus de cinq minutes,
+et déclenche une alerte en conséquence.
+
+```promql
+groups:
+- name: example
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+```
+
+=== Prévisions
+
+L'intégration des prévisions dans les règles d'alerte permet d'anticiper les défaillances potentielles.
+Voici un exemple combinant à la fois les prévisions linéaires et le lissage Holt-Winters pour les alertes avancées :
+
+==== predict_linear()
+
+La fonction predict_linear() est utilisée pour prédire les valeurs futures en fonction des tendances passées. Elle est utile pour prévenir les situations avant qu'elles ne deviennent critiques.
+
+```promql
+groups:
+  - name: advanced_alerts
+    rules:
+      - alert: HighLoadPredicted
+        expr: (instance:node_load1:rate5m * predict_linear(instance:node_load1:rate5m[10m], 3600) > 1.0)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU load forecasted"
+          description: "CPU load is predicted to exceed threshold within the next hour."
+```
+
+Dans cet exemple, nous calculons la durée moyenne des requêtes API sur les cinq dernières minutes et faisons une prévision sur une heure à l'avance.
+
+
+==== lissage exponentiel avec holt_winters()
+
+La fonction holt_winters() incline vers un lissage exponentiel et est utile pour détecter les tendances saisonnières ou les variations à longue portée dans les données.
+
+```promql
+groups:
+  - name: advanced_alerts
+    rules:
+      - alert: SeasonalPatternDetected
+        expr: holt_winters(http_requests_total[1d], 0.3, 0.3) > scalar(holt_winters(http_requests_total[1d], 0.3, 0.3))
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Seasonal traffic pattern detected"
+          description: "A repeating trend in HTTP requests pattern has been detected."
+```
+
+Ici, nous appliquons un modèle Holt-Winters pour prévoir le nombre de requêtes HTTP sur une période d'une journée, avec des valeurs alpha et bêta définies toutes les deux à 0.3.
+
+=== Post-mortem
+
+Après la résolution d'un incident de production, une analyse post-mortem est réalisée afin de ne pas reproduire le ou les problèmes
+
+> Tout le monde fait des erreurs, et si l'erreur est allée jusqu'à la production alors toute l'équipe entière partage le blâme.
+
+> Si l'erreur arrive avant la production, alors c'est une bonne nouvelle. La bienveillance permet à l'équipe de mieux résister à la pression et de s'améliorer
+
+[verse,Jez Humble, Wikipedia]
+Failing fast and learning from failures is a vital part of developing a culture of continuous improvement
+
+* Introduction : Décrivez en quoi le changement ou le processus n'a pas fonctionné comme prévu. Donnez les plus d'indication technique possible et de données mesurable
+* Impact : Décrivez l'impact de l'incident sur les utilisateurs internes et externes. Donnez le nombre de clients ou utilisateurs impactés
+* Détection : Indiquez quand l'équipe a détecté l'incident et comment elle en a eu connaissance.
+* Réponse : Indiquez qui est intervenu sur l'incident et décrivez ce qu'il a fait et à quel moment. Indiquez tout retard ou obstacle à l'intervention.
+* Restrospectives :
+** Quels leçons avont nous apprises ?
+*** Obstacles à l'intervention
+*** Erreurs ICC (Interface Chaise Clavier)
+** Création des tâches correctives:
+*** Liste des processus à améliorer
+*** Rédaction ou mise à jour de procédure
+*** Causes des retards de détection ou d'intervention
+*** ...
+
+Une note vulgarisée pour les équipes non-technique pourra permettre une meilleure compréhension du contexte et une remontée de l'information à la direction.
+
+== Bonus
+
+=== Boite à outils
+
+Liens utils
+
+* link:https://github.com/excalidraw/excalidraw[excalidraw]: est un _whiteboard_ opensource et collaboratif.
+* link:https://k8syaml.com/[k8syaml]: Kubernetes YAML generator
+* link:https://www.davidc.net/sites/default/subnets/subnets.html[Visual Subnet Calculator]
+* link:https://estimations.io/[estimations.io]: Outil de votre pour Poker Planning
+* link:https://mikefarah.gitbook.io/yq[yq}: le requêteur de fichier yaml
+* link:https://devdocs.io/jq/[jq]: le requêteur de fichier jq
+
+=== Bash best practices
+
+Bash is the most used scripting in most CI/CD steps
+
+Download latest cheat/cheat release: link:https://github.com/cheat/cheat/releases[https://github.com/cheat/cheat/releases]:
+
+
+==== A bit of history
+
+Bash is a Unix shell and command language written by Brian Fox for the GNU Project (Initial release date June 8, 1989).
+It's the default shell for numerous Linux distributions and even for Windows WSL.
+
+==== A bit of security
+
+All your bash command history is stored in ~/.bash_history
+
+To clean it: `history -c` and logout directly to clean the history file.
+
+To avoid a command to be recorded in that history file, just add a space before the command
+
+==== Lint
+
+**shellcheck**: is a static analysis and linting tool for sh/bash scripts.  It's mainly focused on handling typical beginner and intermediate level syntax errors and pitfalls where the shell just gives a cryptic error message or strange behavior, but it also reports on a few more advanced issues where corner cases  can  cause delayed failures.
+
+Install VSCode extension: `timonwong.shellcheck`
+
+Console
+
+[source,bash]
+----
+$ shellcheck create_cluster.sh
+In create_cluster.sh line 20:
+printf '# %s ${sa} you should export your kubeconfig path to not kill the prod %s \n', "${unicorn}", "${unicorn}"
+^-- SC2016 (info): Expressions don't expand in single quotes, use double quotes for that.
+For more information:
+  https://www.shellcheck.net/wiki/SC2016 -- Expressions don't expand in singl...
+----
+
+**shfmt**
+
+shfmt formats shell files.
+
+Display a format fixed version of your shell script and ident by 2 spaces:
+
+[source,bash]
+----
+shfmt -i 2 foo.sh
+----
+
+Format foo.sh script with:
+* 2 indentation spaces,
+* function opening braces are placed on next line,
+* Immediately overwrite foo.sh
+
+[source,bash]
+----
+shfmt -i 2 -fn -w foo.sh
+----
+
+Other printer options are available:
+
+[source,bash]
+----
+  -i uint   indent: 0 for tabs (default), >0 for number of spaces
+  -bn       binary ops like && and | may start a line
+  -ci       switch cases will be indented
+  -sr       redirect operators will be followed by a space
+  -kp       keep column alignment paddings
+  -fn       function opening braces are placed on a separate line
+----
+
+==== Header
+
+A bash file has a recognizable Shebang `#!/usr/bin/env bash`
+
+If this is not the case, your bash file will be interpreted as a shell scripts which might not work as intended.
+
+==== The “Set Builtin”
+
+After the shebang you should define the link:https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html[set buitin (complete list here)]
+
+Contrary to human logic:
+
+* set +[a-z] : disable a feature
+* set -[a-z] : enable the feature
+
+The main builtin set are:
+
+`-e`: Exit immediately if a pipeline, a list or command returns a non-zero status
+`-u`: Treat unset variables and parameters other than the special parameters ‘@' or ‘*' as an error when performing parameter expansion
+`-o pipefail`: If set, the return value of a pipeline is the value of the last (rightmost) command to exit with a non-zero status
+`-x`: Print a trace that might help debugging
+
+So, each of your bash scripts must start with:
+
+[source,bash]
+----
+#!/usr/bin/env bash
+set -euo pipefail
+----
+
+You can put builtin set in the shebang:
+
+`-S` argument process and split string into separate arguments, otherwise bash will interpret it as a unique word. See manual for more arguments.
+
+[source,bash]
+----
+#!/usr/bin/env -S bash -euo pipefail
+----
+
+You can change set builtin anywhere in your script
+
+[source,bash]
+----
+#!/usr/bin/env -S bash -euo pipefail
+
+echo "Any exception will stop this script"
+set +e
+echo "Any exception will not stop this script"
+cmd_that_crash
+set -e
+echo "Any exception will stop this script"
+----
+
+==== Read-only
+
+`readonly` command makes variables and functions read-only: you cannot change the value of variables.
+
+Declare a read-only variable:
+
+[source,bash]
+----
+$ readonly foo="bar"
+$ echo "${foo}"
+bar
+$ foo="foo"
+bash: foo: readonly variable
+----
+
+Declare a  read-only function:
+
+[source,bash]
+----
+$ function hello() { echo "Hello world"; }
+$ readonly -f hello
+$ function hello() { echo "Foo Bar"; }
+bash: hello: readonly function
+----
+
+List all read-only variables:
+
+[source,bash]
+----
+readonly
+----
+
+List all read-only functions:
+
+[source,bash]
+----
+readonly -f
+----
+
+==== Trap
+
+Sometime, you scripts fail, and you may need to clean-up or create a hook before exiting. You need to create a function (mousetrap in the example below) and set it as trap and assign one or more exit code to catch errors:
+
+[source,bash]
+----
+mouseTrap () {
+  echo "# my exit code is ${?}"
+  # cleanup
+  rm -f /opt/dummy-file
+  # hook
+  /opt/dummy-hook.sh
+}
+
+trap "mouseTrap" SIGINT SIGTERM EXIT
+----
+
+Using EXIT code will trap even if the scripts exit 0 (normal exit)
+
+To get the full list of exit codes:
+
+[source,bash]
+----
+$ bash -c "kill -l" # I force bash usage because zsh do not behave the same
+ 1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL       5) SIGTRAP
+ 6) SIGABRT      7) SIGBUS       8) SIGFPE       9) SIGKILL     10) SIGUSR1
+11) SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
+[...]
+----
+
+==== Escaping, quotes and double-quotes
+
+You should use double quotes every-time and learn only when you do not need it.
+
+Quoting is used to disable the special meaning of the special characters:
+
+[source,bash]
+----
+$ echo 'How to display a $var'
+How to display $var
+----
+
+Bash escape character is defined by non-quoted backslash (\). It preserves the literal value of the character followed by this symbol:
+
+[source,bash]
+----
+$ echo I want to escape \$var
+I want to escape $var
+$ echo \*
+----
+
+Single quoted string can't parse the value of the variable within the quotation, so you must use double quote:
+
+[source,bash]
+----
+$ var="x"
+$ echo "I want to display value of $var"
+I want to display value of x
+----
+
+When I do not need to use double quotes
+
+* On the right-hand side of an assignment:
+
+[source,bash]
+----
+foo=a single text
+foo=$VARIABLE
+export FOO="Variable" # export is ordinary builtin, so you do need double quotes
+----
+
+* Case statement: A string is not split by the Internal Field Separator (see chapter about it) in a case pattern.
+An unquoted string is interpreted as a pattern, but a quoted variable is interpreted as a literal string:
+
+* In an arithmetic expression
+
+[source,bash]
+----
+$ expr=2*2
+$ echo $((expr))
+4
+----
+
+==== Variables naming convention
+
+* Local function variable names: Lower-case, with underscores to separate words. foo_bar="whatever"
+* Constants and Environment Variable Names: All capital letters, separated with underscores, declared at the top of the file. FOO="bar"
+
+==== Variables and string concatenation
+
+Concatenate a string with a command output:
+
+[source,bash]
+----
+string="Current date is $(date -R)"
+----
+
+[source,bash]
+----
+Concatenate two strings:
+
+FIRST_NAME="Xavier"
+LAST_NAME="Xavier"
+string="My name is ${FIRST_NAME} ${LAST_NAME}"
+----
+
+Be aware the use  $(expression) create a sub-process and increase bash execution time. Must be avoid for time critical bash.
+
+==== Parse bash script arguments
+
+`getopts` is used by shell procedures to parse positional parameters.
+
+Below is a basic how-to (see complete script at the end of this chapter)
+
+`while getopts ":dhq:" opt; do``: loop over every options (split by `$IFS) and set opt for each iteration.
+
+`:dhq:` is the OPTSTRING:
+
+* If the first character of OPTSTRING is a colon (`:`) getopts uses silent error  and will let use manage the error at `:)` and `?)` case switch,
+* `d` and h are single parameters which will be called by `-d` and `-h`,
+* `q:` colon after a letter means that this parameters must have an argument.
+
+`$OPTIND` will be updated to reflect the final option index at each loop iteration.
+
+To set a parameters as mandatory, set a flag like `mandatory_arg=false` and check if it is still false after the getopts loop.
+
+`shift $((OPTIND - 1))`: we shift to latest parameters managed by getopts. All remaining args are not in `${*}>`
+
+`[ -n "${*}" ] && echo >&2 "Remaining args are: <${*}>"`: if the array containing all resting parameters is not empty, it will be displayed on stderr.
+
+[source,bash]
+----
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function usage() {
+  echo "usage: <command> options: [-d|--debug] -q|--question <string>"
+  exit 1
+}
+
+mandatory_arg=false
+question=""
+
+while getopts ":dhq:" opt; do
+  case $opt in
+  d)
+    echo >&2 "Entering DEBUG mode. OPTIND='${OPTIND}'"
+    set -x
+    ;;
+  q)
+    echo >&2 "Got option '-q' with argurment OPTARG='${OPTARG}' OPTIND='${OPTIND}'"
+    mandatory_arg=true
+    question=${OPTARG}
+    ;;
+  h)
+    usage
+    ;;
+  :)
+    echo >&2 "Error: option '-${OPTARG}' requires an argument"
+    usage
+    ;;
+  ?)
+    echo >&2 "Invalid option"
+    usage
+    ;;
+  esac
+done
+
+[ "${mandatory_arg}" == "false" ] && echo >&2 "must set -q args" && usage
+
+shift $((OPTIND - 1))
+[ -n "${*}" ] && echo >&2 "Remaining args are: <${*}>"
+
+shopt -s nocasematch # enable nocasematch for next regex
+[[ "${question}" =~ what\ is\ my\ purpose.* ]] && echo "Pass the butter" || echo "Welcome to the club pal"
+shopt -u nocasematch # disable nocasematch as it is by default
+----
+
+Test:
+
+[source,bash]
+----
+$ ./test.sh -q "What is my purpose ?"
+stderr> Got option '-q' with argurment 'What is my purpose ?'
+stdout> Pass the butter
+$ ./test.sh
+stderr> must set -q args
+stderr> usage: <command> options: [-d] -q "what is my purpose"|*
+Error: option '-q' requires an argument
+stderr> usage: <command> options: [-d|--debug] -q|--question <string>
+----
+
+==== Functions and their parameters
+
+**Using local (the good way)**
+
+Variable declared as local is one that is visible only within the block of code in which it appears:
+
+[source,bash]
+----
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+foo () {
+  local mandatory # We set local variable to avoid using global variables
+  local optional
+  local "${@}" # set all local function values with parametres
+  mandatory=${mandatory:?set a packer_template file name} # Will crash if missing
+  optional=${optional:-default} # will set optional to "default" if not set
+  echo "${mandatory} and ${optional}"
+}
+
+result0=$(foo)
+# exit with code 1 and output below
+# ./tobedelete.sh: line 7: mandatory: set a packer_template file name
+
+result1=$(foo mandatory="foo" optional="bar")
+# $result1 = "foo and bar"
+
+result2=$(foo mandatory="foo")
+# $result2 = "foo and default"
+----
+
+**Using Positional parameters (the bad way)**
+
+In a function `$1` is the first command-line argument passed, but might be confusing because it also the first argument for a shell script.
+
+`shift` The number of positions that parameters should be shifted to the left. This value can be any non-negative integer. If n is zero (0), no parameter shift will be performed. The default value of n is 1.
+
+==== Sourcing
+
+The source command reads and executes commands from the file specified as its argument in the current shell environment. All functions and variables will remain in your current bash session.
+
+[source,bash]
+----
+source my-variables.sh
+source my-functions.sh
+----
+
+`source` and `.` (a period) are the same command.
+
+You can source a well organised folder with all your boilerplate scripts in.
+
+[source,bash]
+----
+for f in ./scripts/*.sh; do source $f; done
+----
+
+Be aware that sourcing a file execute all its statements. So be sure to source file that contains only variables or functions
+
+==== Streams and redirection
+
+Each stream is represented by a numeric file descriptor. If
+
+* `0 stdin` the standard input stream.
+* `1 stdout`, the standard output stream.
+* `2  stderr`, the standard error stream
+
+Streams can be redirected using the `n>` operator.
+
+The default file descriptor is `1`
+
+[source,bash]
+----
+cmd > log.txt               # Only stdout is redirected to log.txt, stderr to console
+cmd 1> log.txt              # Same as above
+cmd 2> log.txt              # only stderr is redirected to log.txt, stdin to console
+cmd 1> log.txt 2> error.txt # stdout is redirected to log.txt, stderr to error.txt
+cmd 1> /dev/null            # Only errors will be displayed on the console
+cmd 2>&1 log.txt            # redirect both stderr and stdout to log.txt
+----
+
+How to echo in stderr directly :
+
+[source,bash]
+----
+echo >&2 "error" # I prefere this one, easy to read
+echo foo >>/dev/stderr # Not easy to read
+----
+
+==== Logging
+
+You may use the function below to log to the console. It's coloring text depending on the first parameters and output function name where log
+was initiated.
+
+[source,bash]
+----
+function log() {
+  local level=${1?}
+  shift
+  local code
+  local line
+  code=''
+  line="[$(date '+%F %T')] $level: $*"
+  if [ -t 2 ]; then
+    case "$level" in
+    INFO) code=36 ;;
+    DEBUG) code=35 ;;
+    WARN) code=33 ;;
+    ERROR) code=31 ;;
+    *) code=37 ;;
+    esac
+    echo -e "\e[${code}m${line} \e[94m(${FUNCNAME[1]})\e[0m"
+  else
+    echo "$line"
+  fi >&2
+}
+----
+
+For example, the following script:
+
+[source,bash]
+----
+log "Just a test"
+log INFO "This is INFO line"
+log DEBUG "This is DEBUG line"
+log WARN "This is WARN line"
+log ERROR "This is ERROR line"
+----
+
+==== Internal Field Separator
+
+The default separators in bash are stored in variable `$IFS`. The default value is `<space><tab><newline>`
+
+So bash will split a variable in an array by the content of IFS variable. If you want to change it, make a backup and apply it before
+leaving your script or your bash terminal will behave strangely:
+
+[source,bash]
+----
+oldIFS="$IFS"
+[....]
+IFS="${oldIFS}"
+----
+
+The example below show how to use IFS:
+
+[source,bash]
+----
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+oldIFS="$IFS"
+FOO="THIS:IS:A:LIST"
+
+IFS=":"
+for bar in ${FOO}; do
+  echo "- ${bar}"
+done
+
+echo "Set original IFS"
+IFS="${oldIFS}" # to not forget to
+
+for bar in ${FOO}; do
+  echo "- ${bar} /not"
+done
+
+# result
+- THIS
+- IS
+- A
+- LIST
+Set original IFS
+- THIS:IS:A:LIST /not
+----
+
+==== Statement return code
+
+You must realize that any script, function or statement, return a code at the end.
+
+Contrary to human logic:
+
+* `1` =  `False`
+* `0` =  `True`
+
+[source,bash]
+----
+$ [ 2 == 2 ]; echo $?
+0 # means true
+$ [ 2 == 1 ]; echo $?
+1 # means false
+----
+
+So for simple statement you don't need to use if
+
+[source,bash]
+----
+[ 2 == 2 ] || echo "You'll never see me"
+[ 2 == 2 ] && echo "You will see me"
+[ 2 == 1 ] || echo "You will see me"
+[ 2 == 2 ] && echo "You'll never catch me"
+----
+
+About any files or folders statement
+
+Before doing complicated things about file or folder statement, check all link:https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Bash-Conditional-Expressions[existing primaries] :
+
+==== User interaction
+
+If you want  user to select interactively a choice between a set of file or item, you can use fzf (fuzzy finder)
+
+For example, if you already have extracted all your different java version in ~/java,  you can create a command to select the version of java you want to use:
+
+[source,bash]
+----
+#/bin/bash -eu
+java_path=~/java
+
+if [ "${1}" = "latest" ]; then
+  choice=$(find ${java_path}/* -maxdepth 0 -type d | tail -n 1)
+elif [ -n "${1}" ]; then
+  choice="${java_path}/${1}"
+else
+  choice=$(fzf < <(find ${java_path}/* -maxdepth 0 -type d))
+fi
+echo export "JAVA_HOME=${choice}"
+echo export "PATH=${PATH}:${choice}/bin"
+----
+
+Then to use this script:
+
+[source,bash]
+----
+eval $(set_java)
+----
+
+=== SSL
+
+==== On CA side
+
+Set your bash variables
+
+[source,bash]
+----
+ROOT_CA_KEYFILE="rootCA.key"
+ROOT_CA_CERT_PEM="rootCA.pem"
+ROOT_CA_CERT_DER="rootCA.der"
+ROOT_CA_P12="rootCA.p12"
+ROOT_SUBJECT="/DC=org/DC=OpenSSL/DC=users/UID=123456/CN=gitlab.local"
+SITE="cureuil.ovh"
+SITE_DNS="*.cureuil.ovh"
+SITE_SUBJECT="/DC=org/DC=OpenSSL/DC=users/UID=123456/CN=gitlab.local"
+WEBSITE_KEYFILE="${SITE}.key"
+WEBSITE_CERT_REQ="${SITE}.csr"
+WEBSITE_SIGNED_CERT="${SITE}.crt"
+WEBSITE_EXTENSION="${SITE}.ext"
+----
+
+Create a private key
+
+[source,bash]
+----
+openssl genrsa \
+  -out "${ROOT_CA_KEYFILE}" \
+  4096
+----
+
+Create a PEM certificat, it is created from the private key in ${ROOT_CA_CERT_PEM}"
+
+[source,bash]
+----
+openssl req \
+  -x509 \
+  -new \
+  -noenc \
+  -key "${ROOT_CA_KEYFILE}" \
+  -sha256 \
+  -days 3650 \
+  -out "${ROOT_CA_CERT_PEM}" \
+  -subj "${ROOT_SUBJECT}"
+----
+
+You can convert a PEM certificat to DER certificat
+
+[source,bash]
+----
+openssl x509 \
+  -inform PEM \
+  -outform DER \
+  -in "${ROOT_CA_CERT_PEM}" \
+  -out "${ROOT_CA_CERT_DER}"
+----
+
+Store Private Key and certificat to a PFX files"
+
+[source,bash]
+----
+openssl pkcs12 \
+  -export \
+  -out "${ROOT_CA_P12}" \
+  -inkey "${ROOT_CA_KEYFILE}" \
+  -in "${ROOT_CA_CERT_PEM}" \
+  -certfile "${ROOT_CA_CERT_PEM}"
+----
+
+==== On website side
+
+Create private key for my website
+
+[source,bash]
+----
+openssl genrsa \
+  -out "${WEBSITE_KEYFILE}" \
+  2048
+----
+Create certificat request for my website
+
+[source,bash]
+----
+openssl req \
+  -new \
+  -key "${WEBSITE_KEYFILE}" \
+  -out "${WEBSITE_CERT_REQ}" \
+  -subj "${SITE_SUBJECT}"
+----
+
+Create the extension definition file
+
+[source,bash]
+----
+cat << EOF > "${WEBSITE_EXTENSION}"
+[ req ]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+
+[ req_distinguished_name ]
+C = FR
+ST = VA
+L = SomeCity
+O = MyCompany
+OU = MyDivision
+CN = gitlab.local
+
+[ v3_req ]
+keyUsage = critical, digitalSignature, keyEncipherment, keyAgreement
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = ${SITE}
+DNS.2 = ${SITE_DNS}
+EOF
+----
+
+Then sign certificat request with my Root CA certificat
+
+[source,bash]
+----
+openssl x509 \
+  -req \
+  -in "${WEBSITE_CERT_REQ}" \
+  -CA "${ROOT_CA_CERT_PEM}" \
+  -CAkey "${ROOT_CA_KEYFILE}" \
+  -extensions v3_req \
+  -CAcreateserial \
+  -out "${WEBSITE_SIGNED_CERT}" \
+  -days 365 \
+  -sha256 \
+  -extfile "${WEBSITE_EXTENSION}"
+----
+
+=== SAN
+
+Un Storage Area Network (SAN) est une infrastructure spécialisée de réseau qui connecte des serveurs à des périphériques de stockage de haute capacité, tels que des disques durs et des bibliothèques de bandes. Les SAN sont conçus pour transférer des données entre les ressources de stockage et les serveurs de manière rapide, sécurisée et efficace. Ils offrent des performances de haut niveau.
+
+[ditaa,target="san"]
+....
++----------------------+     +----------------------+
+|        Hôte 1        |     |        Hôte 2        |
+|  +----------------+  |     |  +----------------+  |
+|  |      NIC 1     |  |     |  |      NIC 1     |  |
+|  +----------------+  |     |  +----------------+  |
+|                      |     |                      |
+|  +----------------+  |     |  +----------------+  |
+|  |      NIC 2     |  |     |  |      NIC 2     |  |
+|  +----------------+  |     |  +----------------+  |
+|                      |     |                      |
++----------+-----------+     +----------+-----------+
+           |                            |
+           v                            v
++----------+----------------------------+----------+
+|                                                  |
+|        Commutateur SAN (Switch SAN)              |
+|   +----------------+    +-----------------+      |
+|   |  Port 1 (H1-P1)|    |   Port 3 (H2-P1)|      |
+|   +----------------+    +-----------------+      |
+|                                                  |
+|   +----------------+    +-----------------+      |
+|   |  Port 2 (H1-P2)|    |   Port 4 (H2-P2)|      |
+|   +----------------+    +-----------------+      |
+|                                                  |
++------------+--------------------+----------------+
+             |                    |
+             |                    |
+             v                    v
++------------+--------------------+----------------+
+|                                                  |
+|              Stockage (Storage Array)            |
+|                                                  |
+|       +------------------+    +---------------+  |
+|       |     Contrôleur 1 |    | Contrôleur 2  |  |
+|       +--------+---------+    +-------+-------+  |
+|                |                      |          |
+|                |                      |          |
+|       +--------+---------+    +-------+-------+  |
+|       |      LUN 1       |    |      LUN 1    |  |
+|       +------------------+    +---------------+  |
++--------------------------------------------------+
+....
+
+==== zoning
+
+Le zoning dans un SAN est une méthode de gestion de la sécurité et de la segmentation du réseau de stockage. Il permet de définir des zones à l'intérieur du SAN, où chaque zone regroupe certains hôtes (serveurs) et périphériques de stockage (targets). Le zoning garantit que seuls les périphériques et hôtes autorisés dans une même zone peuvent communiquer entre eux. Il existe deux principaux types de zoning :
+
+* **Zoning basé sur les ports** : Les zones sont définies en fonction des ports spécifiques des commutateurs SAN. Chaque port attribué à une zone spécifique ne peut communiquer qu'avec les autres ports de la même zone.
+
+* **Zoning basé sur le WWN (World Wide Name)** : Le zoning est établi en utilisant les identifiants uniques WWN des hôtes et des périphériques de stockage. Ce type de zoning offre plus de flexibilité, car il n'est pas lié à des ports physiques.
+
+Le zoning assure une segmentation logique qui améliore la sécurité et la performance du SAN, en réduisant le risque de conflits d'accès et de congestion réseau.
+
+==== Les LUNs (Logical Unit Numbers)
+
+Un LUN (Logical Unit Number) est une identification unique assignée à une section de la capacité d'un périphérique de stockage visible sur le réseau SAN. Les LUNs permettent aux administrateurs de définir comment la capacité de stockage est allouée et présentée aux hôtes connectés. Un LUN peut correspondre à un disque entier ou à une partie spécifique d'un disque.
+
+==== Multipath
+
+Le multipath est une technique utilisée dans les SAN pour garantir une disponibilité élevée et un basculement automatique des chemins d'accès au stockage en cas de défaillance. Dans un environnement SAN, chaque serveur (hôte) est généralement connecté à plusieurs chemins physiques vers les périphériques de stockage via différents commutateurs et contrôleurs de stockage.
+
+Cela permet une bonne résilience en cas de **défaillance** d'un chemin (par exemple, un câble ou un commutateur), l'**équilibrage de la charge**.
+
+==== SAN over LAN
+
+Le concept de SAN over LAN, également connu sous le nom de iSCSI (Internet Small Computer Systems Interface), permet d'utiliser les réseaux Ethernet classiques pour transporter les données de stockage, simulant un SAN traditionnel. Contrairement aux SAN basés sur Fibre Channel, les SAN over LAN utilisent des protocoles Internet pour la connectivité.
+
+Bien que les performances puissent être inférieures à celles des SAN basés sur Fibre Channel, les SAN over LAN sont une solution plus économique pour les petites à moyennes entreprises ou pour les applications qui ne nécessitent pas de hautes performances.
+
+==== Exclusivité
+
+Attention, deux hôtes ne peuvent partager un même Lun qu'à deux conditions:
+
+* Qu'ils aient un système de quorum pour savoir qui a le droit en lecture/écriture, sinon c'est la corruption assurée
+* Qu'ils utilisent un système de fichier prévu à cet effet (vmfs pour VMWare ou ASM pour Oracle)
