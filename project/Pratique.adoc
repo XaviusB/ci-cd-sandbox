@@ -594,7 +594,7 @@ Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
 
 == Rendus Attendus
 
-Merci d'envoyer les fichiers suivants à votre formateur link:xavier.bourdeau@hesisas.fr[xavier.bourdeau@hesisas.fr]. Deux choix
+Merci d'envoyer les fichiers suivants à votre formateur link:xavier.bourdeau@hesias.fr[xavier.bourdeau@hesias.fr]. Deux choix:
 
 [bullet]
 
