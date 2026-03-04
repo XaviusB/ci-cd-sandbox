@@ -161,7 +161,7 @@ docker exec -it test bash
 Une fois l'image prête, vérifier sa taille
 
 ```sh
-docker images ls
+docker image ls
 ```
 
 > FinOps
@@ -510,3 +510,55 @@ images:
   * Déployer automatiquement votre application sur l'environnement de production à chaque fois que vous créez un tag GitLab.
 
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
+
+
+
+== Exercices et barèmes
+
+[%header%footer,cols="1,2,4,1"]
+|===
+|# | Objectifs | Barème | Total
+
+|Exercice 1
+|Créer un image de _container_ en utilisant Kaniko
+a| * 2 points pour l'utilisation du cache Nexus
+ * 4 points si les paquets de l'image sont mis à jour durant le build
+ * 4 points si les permissions de l'image ne permettent pas la modification du code
+a| **10**
+
+|Exercice 2
+|Mettre en place la CI
+a| * 5 points si les vulnérabilités sont scannées (.trivyignore accepté)
+ * 1 point pour le linting
+ * 2 points si la CI s'arrête en cas de non conformité
+ * 3 points si la CI commente la Merge Request
+a| **10**
+
+|Exercice 3
+|Push de l'image sur Nexus
+a| * 3 points si aucun secret n'est apparent dans aucun fichier
+ * 3 points si le tag de l'image correspond au tag de la CI
+ * 2 points si la CI commente la _Merge Request_ en cas de problème
+ * 2 points si la _Merge Request_ ne peu pas être _merged_ en cas de problème
+a| **10**
+
+|Exercice 4
+|Mise en place de la CD
+a| * 3 points si l'environnement de dev est mis à jour automatiquement à chaque _commmit_ d'une _Merge Request_
+ * 2 points si l'environnement de production est mis à jour à la création d'un _tag_ GitLab
+ * 5 points pour la mise en place de link:https://fluxcd.io/[fluxcd] pointant vers le _repository_ des manifestes Kubernetes
+a| **10**
+
+|Exercice 5
+|Bonnes pratiques
+a| * 2 points si l'élève n'utilise que des images du proxy Docker.io de Nexus (voir mise en place)
+ * 2 points si les scripts bash utilisés sont validés par shellcheck (link:https://www.shellcheck.net/wiki/Ignore[shellcheck disable]` accepté mais ne pas abuser)
+ * 3 points pour la documentation technique
+ * 3 points pour la propreté et clareté globale
+a| **10**
+
+|Total
+|
+|
+a| **50**
+|===
