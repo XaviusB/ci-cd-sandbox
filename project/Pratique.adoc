@@ -553,3 +553,11 @@ La structure de votre projet devrait ressembler à ceci :
 > Pour mettre à jour les fichiers yaml, vous *devez* utiliser yq, un outil de manipulation de fichiers yaml en ligne de commande:
 
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
+
+== Bonus
+
+Quelques idées pour aller plus loin :
+
+ * Compiler votre application Python en un binaire autonome
+ * Compiler dans une image Docker _multi-stage_ pour réduire la taille de votre image finale
+ * Faire un _lint_ des fichiers yaml de vos manifestes Kubernetes avec yamllint
