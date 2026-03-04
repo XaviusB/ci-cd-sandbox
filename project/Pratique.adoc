@@ -554,6 +554,14 @@ La structure de votre projet devrait ressembler à ceci :
 
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
 
+== Rendus Attendus
+
+Merci d'envoyer les fichiers suivants à votre formateur link:mailto:xavier.bourdeau@hesisas.fr
+
+ * Fichier Zip contenant votre projet gitlab
+ * Fichier Zip content votre projet k8s
+ * Une copie d'écran de votre application de dev *et* de prod dans ArgoCD montrant que les deux applications sont synchronisées et opérationnelles.
+
 == Bonus
 
 Quelques idées pour aller plus loin :
