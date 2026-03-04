@@ -242,6 +242,7 @@ minikube start
 minikube addons enable ingress
 ```
 
+
 * [ ] Vérifier que le gestionnaire d'ingress est bien démarré
 
 ```sh
@@ -256,7 +257,14 @@ kubectl get pods -n ingress-nginx
 192.168.XX.XX argocd.devops.active
 ```
 
-* [ ] Créer trois manifestes Kubernetes dans une nouveau dossier qui sera bientôt un nouveau repo git, en prenant soin de remplacer les valeurs `FIXME` par les valeurs appropriées pour votre projet :
+Optionnellement, vous pouvez installer le dashboard Kubernetes pour visualiser les ressources de votre cluster: plus facile à utiliser que les commandes `kubectl`
+
+```sh
+minikube addons add dashboard
+kubectl port-forward svc/kubernetes-dashboard -n kubernetes-dashboard 8080:80
+```
+
+* [ ] Créer trois _manifests_ Kubernetes dans une nouveau dossier qui sera bientôt un nouveau repo git, en prenant soin de remplacer les valeurs `FIXME` par les valeurs appropriées pour votre projet :
 
 `deployment.yml`: ce manifeste crée une ressource de déploiement Kubernetes qui définit comment votre application Flask doit être déployée sur le cluster Minikube. Assurez-vous de remplacer `FIXME:FIXME` par le nom de votre image Docker dans la section `image` et `FIXME.py` par le nom de votre fichier Python principal (dans ce cas, `main.py`).
 
@@ -343,8 +351,16 @@ spec:
       targetPort: 8080
 ```
 
+Voici un aperçu de la dependance entre les différentes ressources Kubernetes que nous avons créées :
 
-* [ ] Créer un namespace dédié à votre application pour son environemnt de développement
+```
+Deployment (awesome-app) --> Service (service) --> Ingress (ingress) --> NGINX Ingress Controller --> LAN/WAN <-- User
+```
+
+
+* [ ] Créer un namespace dédié à votre application pour son environemnt de développement. Un namespace Kubernetes est une manière de partitionner les ressources d'un cluster en plusieurs espaces de noms logiques, ce qui permet de mieux organiser et gérer les ressources pour différentes applications ou environnements.
+Les commandes `kubectl -n <namespace>` permettent de spécifier le namespace dans lequel vous souhaitez interagir.
+Le namespace par défaut est `default`, mais il est recommandé de créer des namespaces séparés pour chaque application ou environnement pour éviter les conflits de ressources et faciliter la gestion du cluster.
 
 ```sh
 kubectl create namespace my-app-dev
@@ -399,6 +415,9 @@ curl -H "Host: app-dev.devops.active" http://<IP_DE_VOTRE_CLUSTER>:80
 mkdir deploy-key
 ssh-key -t rsa -b 4096 -C "<email_de_l'étudiant>" -f deploy-key/deploy
 ```
+
+| Ne pas _commit_ vos cles SSH dans votre dépôt GitLab, elles doivent rester secrètes et ne pas être partagées. Cela comptera dans la note finale.
+
 - [ ] Puis ajouter la clé publique à votre compte GitLab `Settings > SSH Keys` pour permettre à ArgoCD d'accéder à votre dépôt GitLab.
 
 === Déployer ArgoCD
@@ -422,13 +441,13 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 ```
 > Attention, le signe `%` à la fin de la ligne signifie qu'il n'y a pas de retour à la ligne. Ne pas l'inclure dans le mot de passe
 
-* [ ] Créer un port-forward pour accéder à l'interface web d'ArgoCD link:https://127.0.0.1:8080
+* [ ] Créer un port-forward pour accéder à l'interface web d'ArgoCD link:https://127.0.0.1:8081
 
 ```sh
-kubectl port-forward svc/argocd-server -n argocd 8080:80
+kubectl port-forward svc/argocd-server -n argocd 8081:80
 ```
 
-* [ ] Ou bien créer un ingress, mais dans ce cas il faut mettre à jour le fichier hosts pour ajouter `argocd.devops.active` pointant vers l'IP de votre cluster Minikube
+* [ ] Ou bien créer un ingress, mais dans ce cas il faut mettre à jour le fichier hosts de votre machine pour ajouter `argocd.devops.active` pointant vers l'IP de votre cluster Minikube (En principe déjà fait précédement)
 ```sh
 kubectl apply -n argocd -f - <<EOF
 apiVersion: networking.k8s.io/v1
@@ -473,13 +492,17 @@ Nous devrions pouvoir accéder à notre application Flask via l'URL définie dan
 
 == Passer en multi environnement
 
-Il va falloir remodeliser nos manifestes Kubernetes pour pouvoir les réutiliser dans différents environnements (dev, staging, prod). Nous allons utiliser Kustomize pour cela.
+Il va falloir remodeliser nos manifestes Kubernetes pour pouvoir les réutiliser dans différents environnements (dev & prod). Nous allons utiliser Kustomize pour cela.
+
+Kustomize est un outil de personnalisation de ressources Kubernetes qui permet de gérer les configurations spécifiques à chaque environnement tout en réutilisant une base commune de manifestes. Il utilise une approche déclarative pour définir les personnalisations, ce qui facilite la maintenance et la gestion des configurations Kubernetes.
 
 * [ ] Créer un dossier `overlays` à la racine de votre projet de déploiement Kubernetes et créer des sous-dossiers pour chaque environnement (dev, prod).
 
 Dans chaque dossier d'environnement, vous pouvez créer des fichiers `kustomization.yaml`
 
 Pour la prod `overlays/prod/kustomization.yaml`:
+
+| Vous remarquerez que nous avons ajouté une section `patches` pour personnaliser l'URL de l'ingress dans l'environnement de production, et une section `images` pour mettre à jour l'image Docker utilisée par le déploiement avec la version appropriée pour chaque environnement.
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
