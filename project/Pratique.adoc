@@ -166,6 +166,13 @@ Vous pouvez vous connecter en bash à votre conteneur
 docker exec -it test bash
 ```
 
+Vous pouvez egalement vous connecter à l'image de base non modifiée:
+
+```shsh
+docker run -it --rm python:3.10-slim bash
+docker run -it --rm python:alpine-xxxx bash
+```
+
 Une fois l'image prête, vérifier sa taille
 
 ```sh
