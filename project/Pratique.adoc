@@ -584,14 +584,20 @@ Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
 
 == Rendus Attendus
 
-Merci d'envoyer les fichiers suivants à votre formateur link:mailto:xavier.bourdeau@hesisas.fr. Deux choix
+Merci d'envoyer les fichiers suivants à votre formateur link:xavier.bourdeau@hesisas.fr[xavier.bourdeau@hesisas.fr]. Deux choix
 
 [bullet]
-  * Donner accès à votre project GitLab contenant votre code d'application et vos manifestes Kubernetes à
 
- * Fichier Zip contenant votre projet gitlab
- * Fichier Zip content votre projet k8s
- * Une copie d'écran de votre application de dev *et* de prod dans ArgoCD montrant que les deux applications sont synchronisées et opérationnelles.
+* Soit donner accès à votre project GitLab contenant votre code d'application *et* vos manifestes Kubernetes `Manage > Project members > Invite members` à `@xavbourdeau` avec le rôle `Reporter` pour qu'il puisse accéder à votre code et à votre pipeline CI/CD
+
+* Soit fournir les fichiers suivants:
+
+** Fichier Zip contenant votre projet gitlab
+** Fichier Zip content votre projet k8s
+
+*Attention*
+
+* Le fichier README.md sera évalué et doit contenir toute la documentation technique nécessaire pour comprendre votre projet, comment le faire fonctionner et comment le déployer.
 
 == Bonus
 
@@ -599,4 +605,4 @@ Quelques idées pour aller plus loin :
 
  * Compiler votre application Python en un binaire autonome
  * Compiler dans une image Docker _multi-stage_ pour réduire la taille de votre image finale
- * Faire un _lint_ des fichiers yaml de vos manifestes Kubernetes avec yamllint
+ * Faire un _lint_ des fichiers yaml de vos _manifests_ Kubernetes avec yamllint
