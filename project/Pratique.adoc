@@ -1,0 +1,512 @@
+= CI/CD
+:sectnums:
+:sectanchors:
+:sectlinks:
+:data-uri:
+:appendix-caption: Exhibit
+:toc: right
+:toc-title: Travaux pratique
+:author: Xavier BOURDEAU
+:email: xavier.bourdeau@hesias.fr
+:sectlinks:
+:favicon: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAESElEQVR4nO1ZW2skVRA+u+562VXBrJuuMxn1RUV8UfDCPnjHP6Cuq7Ksig9i1EdFRNgRBBVB8LImdFVHScTLBtH1BvoXNCi6ETEKmaqeJK5xQdF4jWmpmZ6xZ+YkM+npnWRkPpiXM/Q59XVdTtXXxvTRRx+ZIIelCyHgyxvXLfExIF60KF9Z4reA+LFBDPeYyegks5kAxN9Ykr9gbH53ct2SRK4foMwBydO5l0vndN3YgVdnzvRQHsiTDNQIoHyshuV8ub0dAgkif1qUkdx4aVfXCIAv98cGHK6ueSgPVwzisfUQsFUixIse8r6uEMiPypBF/rV8sC/X6trQWHhJ/EY/qyfAX1rklXaJWOKXTCHalqnB570ye6qHfHfSzUBysHwgyqe1NeT7PCze0Pj8+c/PnGL92Yssyk2WZNyS/NSCyPv5Z+W0zAio8RVj+ag38t2grukBgPytJZlN80JygdxjSebXyI33MvOEvnk1vpGE9ed2eBMLO9Puu/vQsdO1Eq0WYkD8gskKanSVBCBTZhsbDb3iXiD+ze2J4t7UpdKSPJis00oCiNGj8DqTMQYx3FMtDHU/lO+T5bptAPFw7MYlQClouGRtdCMg4Ftd4QQkz5n14twRPgtQ3qxuqAmryWdOMCzxM46E/l1Ld7oNka+2xJ9otcm0tK0Cb2Jhp0VZcNwPj5teAcTh21CR2ETRFtMLuHhy+mTXZZfD0qWmVwDIrzV5IZCH2nu6EG1NVboyhIe8zxFGr7flPiA5or29RdlvNib+fe10HeV0Mf7Pt8SHmkp7wvj4EuFlCIoHuknAouzXc1u333KkbqprMn4DSeSIb7PEf69KAPlD7XDrjUd+Z40HNg8JbDBe3QAk77YcNJCXG8fFrpPARuPjllanoGpyAPLx5quc34gT517TZUBQPKAkgPhtjZSWD7iyXycps4HIa0lv9xa2yI84Qmjc9Aos8WWOEDpu/KntpicQRVuAOHR0g12P/9SwxE84wmi+k/m37bP9uR3aeVqSKQjkmlSbDGGYB5I/HIPFU+YEI69qB/FM4tzD6UZK5Bcdd8EK+OEtpisk5GBNPCMeTiul/ODIhV88kiuzNtoLwuuBOKhKNtVIUA12V7B4Rgc3oVOvWcraE4BM8f7TSRIdQ5XjVVqLFRWl9CbvaP71Ky2xyvI18YxkOju12p/ablE+WKNPmleZcN2KhZZrZCnLkw4SQHxXpkmljdTazZ78bFEmgMKbVchtaro0JH2+MZmQtqJ2aHUr1M4iGQDkO7OXcArRNksy2rJr/S/Z/wHkL5JbAPHn+p9K8WUCPl9VCUVe6tqXGm2pAfnHtkggL9cRQB5rHM5BxbO0pTItrD93tnqj/HloHQQsyh2xsR/VKYDEw6lLZSdQtwPKk0BcassDmqT6IZDka7OpUIi2gi9XWOJHLcqklkG9BPVLpKvbHRoNL9gYQ/vo4/+HfwF3ye8YE/5wMwAAAABJRU5ErkJggg==
+:CopyToClipboardDocinfoProcessor:
+//:emoji: tortue
+
+
+== Introduction
+
+Premier pas dans le monde du CI/CD avec une application Python simple.
+
+> Premier pas dans le gitOps, rendre une application transportable et facilement déployable en utilisant un environment virtuel
+
+=== Créer un environnment virtuel pour une application python
+
+Il est recommandé de créer un environnement virtuel pour votre application Python afin de gérer les dépendances de manière isolée. Voici comment vous pouvez le faire :
+
+* [ ] Créer un dossier pour votre projet et naviguer à l'intérieur de ce dossier :
+
+* [ ] Créer un environnement virtuel avec le module `venv` de python
+
+== Créer une application Flask simple
+
+=== Créer les fichiers de base
+
+* [ ] Créer un fichier nommé `main.py` avec le contenu suivant :
+
+```python
+import os
+from flask import Flask, jsonify
+from threading import Thread
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    print("The root endpoint was accessed!")
+    return "Hello, World!"
+
+@app.route('/healthz')
+def health_check():
+    print("The health_check endpoint was accessed!")
+    response = jsonify(status='OK')
+    response.headers['X-Custom-Header'] = 'Awesome'
+    return response, 200
+
+def run_flask():
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+
+if __name__ == '__main__':
+    flask_thread = Thread(target=run_flask)
+    flask_thread.start()
+```
+
+* [ ] Créer un fichier requirements.txt avec le contenu suivant :
+
+```
+blinker==1.9.0
+click==8.1.8
+Flask==3.1.0
+itsdangerous==2.2.0
+Jinja2==3.1.5
+MarkupSafe==3.0.2
+Werkzeug==3.1.3
+```
+
+> Voilà, nous avons une application Flask simple qui expose deux endpoints : `/` et `/healthz`. Le premier retourne un message "Hello, World!" et le second retourne un statut de santé avec un en-tête personnalisé.
+
+=== Démarrer l'application Flask
+
+* [ ] Sourcer l'environnement virtuel et installer les dépendances
+
+* [ ] Lancer l'application Flask depuis l'environnement virtuel
+
+=== Rendre l'application "plantable"
+
+* [ ] Créer une nouvelle _route_ `/break` dans `main.py` qui simule une erreur de serveur en retournant un code d'état HTTP 500 :
+
+== Fiabiliser l'application
+
+=== Linting
+
+* [ ] Install link:https://marketplace.visualstudio.com/items?itemName=ms-python.pylint[pylint] sur VsCode et corriger les erreurs de linting dans votre code. Objectif 10/10
+* [ ] Créer un fichier requirements-dev.txt avec le paquet `pylint` pour gérer les dépendances de développement.
+* [ ] Executer pylint pour s'assurer que votre code est propre et respecte les bonnes pratiques de codage.
+
+=== Tests unitaires
+
+* [ ] Créer un fichier `test_main.py` à l'aide de l'IA pour écrire des tests unitaires pour les endpoints de votre application Flask en utilisant le framework de test `pytest` de Python.
+* [ ] Ajouter `pytest` à votre fichier `requirements-dev.txt` pour gérer les dépendances de développement.
+* [ ] Exécuter les tests unitaires pour s'assurer que tout fonctionne correctement.
+
+== Se connecter à gitlab.com
+
+* [ ] Créer un compte sur gitlab.com si vous n'en avez pas déjà un.
+* [ ] Créer un nouveau projet sur gitlab.com pour héberger votre code.
+* [ ] Initialiser un dépôt Git nommé `<nom_de_l'étudiant>-api` dans votre projet local et ajouter votre code.
+* [ ] Ajouter le dossier .venv à votre fichier .gitignore pour éviter de commiter l'environnement virtuel.
+* [ ] Commiter vos changements et pousser votre code vers le dépôt GitLab.
+
+Vous devriez avoir les fichiers suivants dans votre projet :
+
+```
+.gitignore
+main.py
+requirements.txt
+requirements-dev.txt
+test_main.py
+
+```
+== Créer un pipeline CI/CD
+
+* [ ] Créer un fichier `.gitlab-ci.yml` à la racine de votre projet avec le contenu suivant pour définir les étapes de votre pipeline CI/CD :
+
+=== Linting
+
+* [ ] Ajouter une étape de linting dans votre pipeline CI/CD pour exécuter `pylint` sur votre code et s'assurer qu'il respecte les bonnes pratiques de codage.
+
+=== Tests unitaires
+
+* [ ] Ajouter une étape de tests unitaires dans votre pipeline CI/CD pour exécuter `pytest` et s'assurer que tous les tests passent correctement.
+
+== Création d'une image Docker
+
+* [ ] Créer un fichier `Dockerfile` à la racine de votre projet
+
+```Dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+RUN apt update && apt -y install curl
+COPY requirements.txt /app/requirements.txt
+RUN  pip install -r requirements.txt
+COPY main.py /app/main.py
+
+ENTRYPOINT [ "python", "main.py" ]
+```
+
+Puis build l'image Docker localement :
+
+```sh
+docker build -t <nom_de_l'étudiant>-api:latest .
+docker run -p 8080:8080 --rm --name test <nom_de_l'étudiant>-api:latest
+```
+
+Vous pouvez vous connecter en bash à votre conteneur
+
+```sh
+docker exec -it test bash
+```
+
+Une fois l'image prête, vérifier sa taille
+
+```sh
+docker images ls
+```
+
+> FinOps
+
+- [ ] Trouver des moyens de réduire la taille de votre image Docker pour optimiser les coûts de stockage et de déploiement. L'image doit faire moins de 100Mo. Curl doit demeurer sur l'image pour les tests de santé.
+
+* [ ] Configurer le cache de pip dans votre pipeline CI/CD pour accélérer l'installation des dépendances en réutilisant les paquets déjà téléchargés.
+
+> Secops
+
+- [ ] Trouver un moyen pour le code puisse être executé mais pas être modifié à l'intéreur de l'image
+
+=== Build d'image Docker
+
+* [ ] Dans gitlab.com créer un token `Settings > Repository > Deploy Tokens` avec les permissions `read_registry` et `write_registry` pour pouvoir pousser votre image Docker vers le registre de conteneurs de GitLab.
+
+> Ne perdez pas ce token
+
+* [ ] Ajouter les variables d'environnement `CI_REGISTRY_USER` et `CI_REGISTRY_PASSWORD` dans les paramètres de votre projet GitLab `Settings > CI / CD > Variables` pour stocker les informations d'identification nécessaires à l'authentification avec le registre de conteneurs.
+
+* [ ] Identifier le nom de votre image Docker grâce au menu `Deploy > Container Registry` de votre projet GitLab. Le nom de l'image devrait être quelque chose comme `registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>`.
+
+* [ ] Tenter de build et de push l'image depuis votre poste
+
+```sh
+docker login registry.gitlab.com
+docker build -t registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>:latest .
+docker push registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom
+```
+
+* [ ] Ajouter une étape de build d'image Docker dans votre pipeline CI/CD pour construire une image de votre application à partir du `Dockerfile` que vous avez créé.
+
+> Semantic versioning
+
+[bullet]
+  * Soit il s'agit d'une pull-request, dans ce cas on tag |pr-<numéro_de_pr>-<sha1_du_commit>|
+  * Soit il s'agit d'un tag gitlab, dans ce cas on tag |<version-du-tag>-<sha1_du_commit>|
+
+* [ ] Ajouter une étape de push d'image Docker en respectant le _semantic versioning_
+
+* [ ] Vérifier que votre image Docker a été poussée avec succès `Deploy > Container Registry`
+
+=== Scan de vulnérabilités
+
+* [ ] Ajouter une étape de scan de vulnérabilités dans votre pipeline CI/CD en utilisant Trivy avant de pousser votre image Docker vers le registre de conteneurs.
+
+> SecOps
+
+[bullet]
+  * Si des vulnérabilités sont détectées, le pipeline doit échouer et afficher les détails des vulnérabilités trouvées.
+  * Si aucune vulnérabilité n'est détectée, l'image Docker doit être poussée vers le registre de conteneurs.
+
+== Préparation du déploiement
+
+* [ ] Installer link:https://kubernetes.io/fr/docs/tasks/tools/install-kubectl/#install-kubectl-on-windows[kubectl]
+* [ ] Installer link:https://www.virtualbox.org/wiki/Downloads[VirtualBox]
+* [ ] Installer link:https://minikube.sigs.k8s.io/docs/start/[Minikube]
+* [ ] Installer link:https://www.docker.com/products/docker-desktop[Docker Desktop]
+
+* [ ] Démarrer Minikube et vérifier que votre cluster Kubernetes local est opérationnel
+
+```sh
+minikube start
+minikube addons enable ingress
+```
+
+* [ ] Vérifier que le gestionnaire d'ingress est bien démarré
+
+```sh
+kubectl get pods -n ingress-nginx
+```
+
+* [ ] Créer les entrées suivantes dans votre fichier hosts avec l'IP retournée par `minikube ip`
+
+```
+192.168.49.2 app-dev.devops.active
+192.168.49.2 app.devops.active
+192.168.49.2 argocd.devops.active
+```
+
+* [ ] Créer trois manifestes Kubernetes dans une nouveau dossier qui sera bientôt un nouveau repo git, en prenant soin de remplacer les valeurs `FIXME` par les valeurs appropriées pour votre projet :
+
+`deployment.yml`: ce manifeste crée une ressource de déploiement Kubernetes qui définit comment votre application Flask doit être déployée sur le cluster Minikube. Assurez-vous de remplacer `FIXME:FIXME` par le nom de votre image Docker dans la section `image` et `FIXME.py` par le nom de votre fichier Python principal (dans ce cas, `main.py`).
+
+```yml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: awesome-app
+  labels:
+    app: awesome-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: awesome-app
+  template:
+    metadata:
+      labels:
+        app: awesome-app
+    spec:
+      containers:
+        - name: web-app
+          image: FIXME:FIXME
+          tty: true
+          env:
+            - name: PYTHONUNBUFFERED
+              value: '1'
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+            failureThreshold: 1
+          resources:
+            requests:
+              cpu: 100m
+```
+
+`ingress.yml`: ce manifeste crée une ressource d'ingress qui expose votre application Flask en utilisant le gestionnaire d'ingress NGINX. Assurez-vous que le nom du service dans la section `backend` correspond à celui défini dans votre manifeste de service Kubernetes.
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app-dev.devops.active
+      http:
+        paths:
+          - backend:
+              service:
+                name: service
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix
+```
+
+service.yml: ce manifeste expose votre application Flask en créant un service Kubernetes de type ClusterIP. Assurez-vous que le nom du service correspond à celui utilisé dans votre manifeste d'ingress.
+
+```yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: awesome-app
+apiVersion: v1
+kind: Service
+metadata:
+  name: service
+spec:
+  selector:
+    app: awesome-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+```
+
+
+* [ ] Créer un namespace dédié à votre application pour son environemnt de développement
+
+```sh
+kubectl create namespace my-app-dev
+```
+
+* [ ] Créer une secret Kubernetes pour stocker les informations d'identification de votre registre de conteneurs GitLab
+
+```sh
+kubectl create secret docker-registry gitlab-registry-secret \
+  --docker-server=registry.gitlab.com \
+  --docker-username=$CI_REGISTRY_USER \
+  --docker-password=$CI_REGISTRY_PASSWORD \
+  -n my-app-dev
+```
+
+* [ ] Appliquer les manifest Kubernetes pour déployer votre application sur le cluster Minikube
+
+```sh
+kubectl apply -f deployment.yml -f service.yml -f ingress.yml -n my-app-dev
+```
+
+* [ ] Vérifier que les ressources Kubernetes ont été créées avec succès
+
+```sh
+kubectl get all -n my-app-dev
+```
+
+* [ ] Tester l'accès à votre application en utilisant le nom d'hôte défini dans votre manifeste d'ingress
+
+[bullet]
+  * Vous pouvez utiliser `curl` pour tester l'accès à votre application depuis la ligne de commande :
+
+```sh
+curl -H "Host: app-dev.devops.active" http://<IP_DE_VOTRE_CLUSTER>:80
+```
+
+  * Ou directement depuis votre navigateur si vous avez ajouté les entrées correspondantes dans votre fichier hosts.
+
+== Création de la CD
+
+=== Pousser vos manifestes
+
+- [ ] Créer un nouveau project dans gitlab.com pour héberger votre code de déploiement Kubernetes. Nommez ce projet `<nom_de_l'étudiant>-k8s`.
+
+- [ ] Initialiser un dépôt Git dans votre projet local de déploiement Kubernetes et ajouter vos manifestes Kubernetes.
+
+- [ ] Commiter vos changements et pousser votre code vers le dépôt GitLab.
+
+- [ ] Créé une clé SSH pour votre projet de déploiement Kubernetes
+
+```sh
+mkdir deploy-key
+ssh-key -t rsa -b 4096 -C "<email_de_l'étudiant>" -f deploy-key/deploy
+```
+- [ ] Puis ajouter la clé publique à votre compte GitLab `Settings > SSH Keys` pour permettre à ArgoCD d'accéder à votre dépôt GitLab.
+
+=== Déployer ArgoCD
+
+==== Installer ArgoCD
+
+```sh
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side --force-conflicts -f https://github.com/argoproj/argo-cd/raw/refs/heads/master/manifests/install.yaml
+```
+Récupérer le mot de passe initial pour se connecter à l'interface web d'ArgoCD
+```sh
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+> Attention, le signe `%` à la fin de la ligne signifie qu'il n'y a pas de retour à la ligne. Ne pas l'inclure dans le mot de passe
+
+* [ ] Créer un port-forward pour accéder à l'interface web d'ArgoCD
+
+```sh
+kubectl port-forward svc/argocd-server -n argocd 8080:80
+```
+
+* [ ] Ou bien créer un ingress, mais dans ce cas il faut mettre à jour le fichier hosts pour ajouter `argocd.devops.active` pointant vers l'IP de votre cluster Minikube
+```sh
+kubectl apply -n argocd -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.devops.active
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+EOF
+```
+
+Puis nous devons désactiver la redirection HTTP vers HTTPS dans les paramètres d'ArgoCD pour pouvoir accéder à l'interface web via HTTP
+
+```sh
+kubectl patch cm argocd-cmd-params-cm -n argocd --type merge -p '{"data": {"server.insecure": "true"}}'
+kubectl delete pod -l app.kubernetes.io/name=argocd-server -n argocd
+```
+
+Enfin nous pouvons utiliser argocd sur https://argocd.devops.active
+
+==== Configurer ArgoCD
+
+* [ ] Ajouter votre dépôt GitLab contenant vos manifestes Kubernetes dans ArgoCD `Settings > Repositories > Connect Repo using HTTPS` en utilisant l'URL de votre dépôt GitLab et la clé ssh de deploiement créée précédement
+
+==== Créer une application ArgoCD
+
+* [ ] Créer une nouvelle application ArgoCD pour déployer votre application Flask sur le cluster Minikube en utilisant les manifestes Kubernetes que vous avez créés.
+
+Nous devrions pouvoir accéder à notre application Flask via l'URL définie dans notre manifeste d'ingress `http://app-dev.devops.active` et voir le message "Hello, World!" s'afficher.
+
+== Passer en multi environnement
+
+Il va falloir remodeliser nos manifestes Kubernetes pour pouvoir les réutiliser dans différents environnements (dev, staging, prod). Nous allons utiliser Kustomize pour cela.
+
+* [ ] Créer un dossier `overlays` à la racine de votre projet de déploiement Kubernetes et créer des sous-dossiers pour chaque environnement (dev, prod).
+
+Dans chaque dossier d'environnement, vous pouvez créer des fichiers `kustomization.yaml`
+
+Pour la prod `overlays/prod/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/deployment.yml
+  - ../../base/service.yml
+  - ../../base/ingress.yml
+patches:
+  - target:
+      kind: Ingress
+      name: ingress
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: app.devops.active
+images:
+  - name: registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>
+    newName: registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>
+    newTag: FIXME
+```
+
+Pour la dev `overlays/dev/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/deployment.yml
+  - ../../base/service.yml
+  - ../../base/ingress.yml
+images:
+  - name: registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>
+    newName: registry.gitlab.com/<votre_nom_d'utilisateur>/<votre_projet>/<nom_de_l'image>
+    newTag: FIXME
+```
+
+* [ ] Déplacer vos manifestes Kubernetes dans le dossier `base` et créer des fichiers `kustomization.yaml` dans chaque dossier d'environnement pour définir les personnalisations spécifiques à chaque environnement.
+
+* [ ] Commit & Push vos changements vers votre dépôt GitLab.
+
+* [ ] Mettre à jour votre application ArgoCD pour utiliser les fichiers `kustomization.yaml` de chaque environnement comme source de déploiement. `overlays/dev` pour l'environnement de développement
+
+* [ ] Créer une nouvelle application pour la production en utilisant `overlays/prod` pour l'environnement de production.
+
+* [ ] Vérifier que les déploiements pour chaque environnement sont correctement configurés et que vous pouvez accéder à votre application Flask via les URL définies dans vos manifestes d'ingress pour chaque environnement.
+
+* [ ] Créer une nouvelle étape dans votre fichier `.gitlab-ci.yml` pour:
+
+[bullet]
+  * Déployer automatiquement votre application sur l'environnement de développement à chaque fois que vous poussez des changements dans une pull-request
+  * Déployer automatiquement votre application sur l'environnement de production à chaque fois que vous créez un tag GitLab.
+
+Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
