@@ -579,8 +579,8 @@ La structure de votre projet devrait ressembler à ceci :
 * [ ] Créer une nouvelle étape dans votre fichier `.gitlab-ci.yml` pour:
 
 [bullet]
-  * Déployer automatiquement votre application sur l'environnement de développement à chaque fois que vous poussez des changements dans une pull-request
-  * Déployer automatiquement votre application sur l'environnement de production à chaque fois que vous créez un tag GitLab.
+* [ ] Déployer automatiquement votre application sur l'environnement de développement à chaque fois que vous poussez des changements dans une pull-request
+* [ ] Déployer automatiquement votre application sur l'environnement de production à chaque fois que vous créez un tag GitLab.
 
 > Pour mettre à jour les fichiers yaml, vous *devez* utiliser yq, un outil de manipulation de fichiers yaml en ligne de commande:
 
@@ -592,18 +592,66 @@ Pour que git sache quelle clé utiliser pour accéder au repo de déploiement Ku
 
 Vous pouvez désormais reposer en paix... Votre première CI/CD fonctionne
 
-== Rendus Attendus
+== Projet
 
-Merci d'envoyer les fichiers suivants à votre formateur link:xavier.bourdeau@hesias.fr[xavier.bourdeau@hesias.fr]. Deux choix:
+=== Barème
+
+[%header%footer,cols="1,2,4,1"]
+|===
+|# | Objectifs | Barème | Total
+
+|Exercice 1
+|Créer un image de _container_
+a| * 2 points pour l'utilisation d'une image de _build_
+ * 2 points si les paquets de l'image sont mis à jour durant le build
+ * 3 points si l'image fait moins de 100 Mo
+ * 3 points si les permissions de l'image ne permettent pas la modification du code
+a| **10**
+
+|Exercice 2
+|Mettre en place la CI
+a| * 4 points si les vulnérabilités sont scannées (.trivyignore accepté)
+ * 1 point pour le linting
+ * 2 points si la CI s'arrête en cas de non conformité
+ * 3 points si la CI commente la Merge Request
+a| **10**
+
+|Exercice 3
+|Push de l'image sur le registry gitLab
+a| * 3 points si aucun secret n'est apparent dans aucun fichier
+ * 3 points si le tag de l'image correspond au tag de la CI
+ * 2 points si la CI commente la _Merge Request_ en cas de problème
+ * 2 points si la _Merge Request_ ne peut pas être _merged_ en cas de problème
+a| **10**
+
+|Exercice 4
+|Mise en place de la CD
+a| * 3 points si l'environnement de dev est mis à jour automatiquement à chaque _commit_ d'une _Merge Request_
+ * 2 points si l'environnement de production est mis à jour à la création d'un _tag_ GitLab
+ * 5 points pour la mise en place des deux environments Argocd de _dev_ et de _prod_ pointant vers le _repository_ des manifestes Kubernetes
+a| **10**
+
+|Exercice 5
+|Très Bonnes pratiques
+a| * 5 points pour la documentation technique
+ * 5 points pour la propreté et clareté globale
+a| **10**
+
+|Total
+|
+|
+a| **50**
+|===
+
+Ce barème permet d'évaluer le projet sur l'ensemble des aspects abordés dans le cours, en respectant les bonnes pratiques CI/CD, sécurité, documentation et automatisation.
+
+=== Rendus
 
 [bullet]
 
-* Soit donner accès à votre project GitLab contenant votre code d'application *et* vos manifestes Kubernetes `Manage > Project members > Invite members` à `@xavbourdeau` avec le rôle `Reporter` pour qu'il puisse accéder à votre code et à votre pipeline CI/CD
-
-* Soit fournir les fichiers suivants:
-
 ** Fichier Zip contenant votre projet gitlab
-** Fichier Zip content votre projet k8s
+** Fichier Zip contenant votre projet k8s
+** Fichier Zip contenant le sortie de la commande `kubectl get all -o yaml -A`
 
 *Attention*
 
